@@ -3,9 +3,19 @@
 
 #include <iostream>
 
-int main()
+#include "TreeWalk.h"
+
+int main(int argc, char* argv[])
 {
-    std::cout << "Hello World!\n";
+	if (argc > 2)
+	{
+		std::cout << "Usage: twlox [script]" << std::endl;
+		exit(64);
+	}
+	else if (argc == 2)
+		TreeWalk::RunFile(argv[1]);
+	else
+		TreeWalk::RunPrompt();
 }
 
 // Exécuter le programme : Ctrl+F5 ou menu Déboguer > Exécuter sans débogage
