@@ -4,9 +4,22 @@
 #include <iostream>
 
 #include "TreeWalk.h"
+#include "Expr.hpp"
+#include "Token.h"
+#include "AstPrinter.h"
 
 int main(int argc, char* argv[])
 {
+	Binary b{
+		std::make_shared<Unary>(
+			std::make_shared<Token>(Token(Token::TokenType::MINUS, "-", {}, 1)),
+			std::make_shared<Literal>(std::make_shared<Object>(123.0))),
+		std::make_shared<Token>(Token(Token::TokenType::STAR, "*", {}, 1)),
+		std::make_shared<Grouping>(std::make_shared<Literal>(std::make_shared<Object>(45.67)))
+	};
+
+	std::cout << std::get<std::string>(AstPrinter().print(b)) << std::endl;
+
 	if (argc > 2)
 	{
 		std::cout << "Usage: twlox [script]" << std::endl;

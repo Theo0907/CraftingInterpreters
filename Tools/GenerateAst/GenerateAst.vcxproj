@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{ecee3bbc-e61e-452b-be10-6c220f004f7f}</ProjectGuid>
-    <RootNamespace>TreeWalk</RootNamespace>
+    <ProjectGuid>{91b73986-9fb3-444a-ba95-0e2635ba2f5f}</ProjectGuid>
+    <RootNamespace>GenerateAst</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -100,34 +100,25 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>EnableAllWarnings</WarningLevel>
+      <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>include</AdditionalIncludeDirectories>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <PreBuildEvent>
-      <Command>$(SolutionDir)$(Platform)\$(Configuration)\GenerateAst.exe $(ProjectDir)include</Command>
-      <Message>
-      </Message>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>EnableAllWarnings</WarningLevel>
+      <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>include</AdditionalIncludeDirectories>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -136,27 +127,9 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <PreBuildEvent>
-      <Command>$(SolutionDir)$(Platform)\$(Configuration)\GenerateAst.exe $(ProjectDir)include</Command>
-      <Message>
-      </Message>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\AstPrinter.cpp" />
-    <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\Object.cpp" />
-    <ClCompile Include="src\Scanner.cpp" />
-    <ClCompile Include="src\Token.cpp" />
-    <ClCompile Include="src\TreeWalk.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="include\AstPrinter.h" />
-    <ClInclude Include="include\Expr.hpp" />
-    <ClInclude Include="include\Object.h" />
-    <ClInclude Include="include\Scanner.h" />
-    <ClInclude Include="include\Token.h" />
-    <ClInclude Include="include\TreeWalk.h" />
+    <ClCompile Include="GenerateAst.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
