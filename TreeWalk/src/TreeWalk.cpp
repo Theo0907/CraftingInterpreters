@@ -24,6 +24,7 @@ void TreeWalk::RunPrompt()
 			break;
 		tw.Run(line);
 		hadError = false;
+		// Dont care about runtime errors here
 	}
 }
 
@@ -37,6 +38,8 @@ void TreeWalk::RunFile(char filePath[])
 	tw.Run(source.str());
 	if (hadError)
 		exit(65);
+	if (hadRuntimeError)
+		exit(70);
 }
 
 void TreeWalk::Error(int line, const std::string& message)
@@ -52,6 +55,14 @@ void TreeWalk::Error(const Token& token, const std::string& message)
 		Report(token.line, " at '" + token.lexeme + "'", message);
 }
 
+bool TreeWalk::hadRuntimeError = false;
+
+void TreeWalk::RuntimeError(const std::string& message)
+{
+	std::cerr << message << std::endl;
+	hadRuntimeError = true;
+}
+
 bool TreeWalk::hadError = false;
 
 void TreeWalk::Report(int line, const std::string& where, const std::string& message)
@@ -59,6 +70,8 @@ void TreeWalk::Report(int line, const std::string& where, const std::string& mes
 	std::cerr << "[line " << std::to_string(line) << "] Error" << where << ": " << message;
 	hadError = true;
 }
+
+Interpreter TreeWalk::interpreter = {};
 
 void TreeWalk::Run(const std::string& source)
 {
@@ -71,5 +84,6 @@ void TreeWalk::Run(const std::string& source)
 	if (hadError)
 		return;
 
-	std::cout << std::get<std::string>(AstPrinter().print(*expr)) << std::endl;
+	//std::cout << AstPrinter().print(*expr).GetString() << std::endl;
+	interpreter.interpret(*expr);
 }

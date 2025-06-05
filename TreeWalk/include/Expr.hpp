@@ -5,10 +5,10 @@
 class Visitor
 {
 public:
-	virtual std::variant<std::string, double, std::monostate> visitBinaryExpr(class Binary& expr) = 0;
-	virtual std::variant<std::string, double, std::monostate> visitGroupingExpr(class Grouping& expr) = 0;
-	virtual std::variant<std::string, double, std::monostate> visitLiteralExpr(class Literal& expr) = 0;
-	virtual std::variant<std::string, double, std::monostate> visitUnaryExpr(class Unary& expr) = 0;
+	virtual Object visitBinaryExpr(class Binary& expr) = 0;
+	virtual Object visitGroupingExpr(class Grouping& expr) = 0;
+	virtual Object visitLiteralExpr(class Literal& expr) = 0;
+	virtual Object visitUnaryExpr(class Unary& expr) = 0;
 	virtual ~Visitor() = default;
 };
 
@@ -16,7 +16,7 @@ class Expr
 {
 public:
 virtual ~Expr() = default; 
-	virtual std::variant<std::string, double, std::monostate> accept(Visitor& visitor) = 0;
+	virtual Object accept(Visitor& visitor) = 0;
 }; 
 
 class Binary : public Expr
@@ -30,7 +30,7 @@ public:
 	std::shared_ptr<Token>	op;
 	std::shared_ptr<Expr>	right;
 
-virtual std::variant<std::string, double, std::monostate> accept(Visitor& visitor) 
+virtual Object accept(Visitor& visitor) 
 	{
 		return visitor.visitBinaryExpr(*this);
 	}
@@ -45,7 +45,7 @@ public:
 	{}
 	std::shared_ptr<Expr>	expression;
 
-virtual std::variant<std::string, double, std::monostate> accept(Visitor& visitor) 
+virtual Object accept(Visitor& visitor) 
 	{
 		return visitor.visitGroupingExpr(*this);
 	}
@@ -60,7 +60,7 @@ public:
 	{}
 	std::shared_ptr<Object>	value;
 
-virtual std::variant<std::string, double, std::monostate> accept(Visitor& visitor) 
+virtual Object accept(Visitor& visitor) 
 	{
 		return visitor.visitLiteralExpr(*this);
 	}
@@ -76,7 +76,7 @@ public:
 	std::shared_ptr<Token>	op;
 	std::shared_ptr<Expr>	right;
 
-virtual std::variant<std::string, double, std::monostate> accept(Visitor& visitor) 
+virtual Object accept(Visitor& visitor) 
 	{
 		return visitor.visitUnaryExpr(*this);
 	}

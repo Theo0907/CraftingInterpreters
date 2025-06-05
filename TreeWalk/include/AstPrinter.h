@@ -16,7 +16,7 @@ protected:
 	{
 		result.append(" ");
 		auto a = expr.accept(*this);
-		std::string s = std::get<std::string>(a);
+		std::string s = a.GetString();
 		result.append(s);
 
 		if constexpr (sizeof...(args) > 0)
@@ -24,7 +24,7 @@ protected:
 	}
 
 	template <ExprDerived... Types>
-	std::variant<std::string, double, std::monostate> parenthesize(std::string name, Expr& expr, Types&... args)
+	Object parenthesize(std::string name, Expr& expr, Types&... args)
 	{
 		std::string result;
 		result.append("(").append(name);
@@ -39,11 +39,11 @@ protected:
 public:
 	virtual ~AstPrinter() override = default;
 
-	std::variant<std::string, double, std::monostate> print(Expr& expr);
+	Object	print(Expr& expr);
 
-	std::variant<std::string, double, std::monostate> visitBinaryExpr(Binary& expr) override;
-	std::variant<std::string, double, std::monostate> visitGroupingExpr(Grouping& expr) override;
-	std::variant<std::string, double, std::monostate> visitLiteralExpr(Literal& expr) override;
-	std::variant<std::string, double, std::monostate> visitUnaryExpr(Unary& expr) override;
+	Object	visitBinaryExpr(Binary& expr) override;
+	Object	visitGroupingExpr(Grouping& expr) override;
+	Object	visitLiteralExpr(Literal& expr) override;
+	Object	visitUnaryExpr(Unary& expr) override;
 };
 

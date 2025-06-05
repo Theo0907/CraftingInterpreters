@@ -26,7 +26,7 @@ void defineVisitor(std::ofstream& writer, const std::string& baseName, const std
 	{
 		std::string typeName{ type.begin(), std::find_if(type.begin(), type.end(), [](unsigned char ch) { return std::isspace(ch); }) };
 		
-		writer << "\tvirtual std::variant<std::string, double, std::monostate> visit" << typeName << baseName << "(class " << typeName << "& " << lowerBaseName << ") = 0;" << std::endl;
+		writer << "\tvirtual Object visit" << typeName << baseName << "(class " << typeName << "& " << lowerBaseName << ") = 0;" << std::endl;
 	};
 
 	writer << "\tvirtual ~Visitor() = default;" << std::endl;
@@ -87,7 +87,7 @@ void defineType(std::ofstream& writer, const std::string& baseName, const std::s
 	}
 
 	// Visitor pattern
-	writer << std::endl << "virtual std::variant<std::string, double, std::monostate> accept(Visitor& visitor) \n\t{\n";
+	writer << std::endl << "virtual Object accept(Visitor& visitor) \n\t{\n";
 	writer << "\t\treturn visitor.visit" << className << baseName << "(*this);\n\t}" << std::endl;
 
 	writer << "}; " << std::endl << std::endl;
@@ -106,7 +106,7 @@ void defineAst(const std::string& outputDir, const std::string& baseName, const 
 	defineVisitor(writer, baseName, types);
 
 	writer << "class " << baseName << "\n{\npublic:\nvirtual ~" << baseName << "() = default; \n";
-	writer << "\tvirtual std::variant<std::string, double, std::monostate> accept(Visitor& visitor) = 0;" << std::endl;
+	writer << "\tvirtual Object accept(Visitor& visitor) = 0;" << std::endl;
 	writer << "}; " << std::endl << std::endl;
 
 

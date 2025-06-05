@@ -144,6 +144,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\AstPrinter.cpp" />
+    <ClCompile Include="src\Interpreter.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Object.cpp" />
     <ClCompile Include="src\Parser.cpp" />
@@ -154,6 +155,7 @@
   <ItemGroup>
     <ClInclude Include="include\AstPrinter.h" />
     <ClInclude Include="include\Expr.hpp" />
+    <ClInclude Include="include\Interpreter.h" />
     <ClInclude Include="include\Object.h" />
     <ClInclude Include="include\Parser.h" />
     <ClInclude Include="include\Scanner.h" />
