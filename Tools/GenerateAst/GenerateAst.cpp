@@ -29,6 +29,7 @@ void defineVisitor(std::ofstream& writer, const std::string& baseName, const std
 		writer << "\tvirtual std::variant<std::string, double, std::monostate> visit" << typeName << baseName << "(class " << typeName << "& " << lowerBaseName << ") = 0;" << std::endl;
 	};
 
+	writer << "\tvirtual ~Visitor() = default;" << std::endl;
 	writer << "};" << std::endl << std::endl;
 }
 

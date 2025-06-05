@@ -10,7 +10,7 @@
 
 int main(int argc, char* argv[])
 {
-	Binary b{
+	/*Binary b{
 		std::make_shared<Unary>(
 			std::make_shared<Token>(Token(Token::TokenType::MINUS, "-", {}, 1)),
 			std::make_shared<Literal>(std::make_shared<Object>(123.0))),
@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
 	};
 
 	std::cout << std::get<std::string>(AstPrinter().print(b)) << std::endl;
-
+	*/
 	if (argc > 2)
 	{
 		std::cout << "Usage: twlox [script]" << std::endl;

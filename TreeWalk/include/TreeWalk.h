@@ -8,6 +8,7 @@ public:
 	static void	RunPrompt();
 	static void	RunFile(char filePath[]);
 	static void Error(int line, const std::string& message);
+	static void Error(const class Token& token, const std::string& message);
 private:
 	static void Report(int line, const std::string& where, const std::string& message);
 	static bool hadError;

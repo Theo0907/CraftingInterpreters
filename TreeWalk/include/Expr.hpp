@@ -9,6 +9,7 @@ public:
 	virtual std::variant<std::string, double, std::monostate> visitGroupingExpr(class Grouping& expr) = 0;
 	virtual std::variant<std::string, double, std::monostate> visitLiteralExpr(class Literal& expr) = 0;
 	virtual std::variant<std::string, double, std::monostate> visitUnaryExpr(class Unary& expr) = 0;
+	virtual ~Visitor() = default;
 };
 
 class Expr

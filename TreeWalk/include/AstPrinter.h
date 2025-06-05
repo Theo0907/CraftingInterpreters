@@ -14,12 +14,10 @@ protected:
 	template <ExprDerived... Types>
 	void parenthesize_internal(std::string& result, std::string name, Expr& expr, Types&... args)
 	{
-		std::cout << "a" << std::endl;
 		result.append(" ");
 		auto a = expr.accept(*this);
 		std::string s = std::get<std::string>(a);
 		result.append(s);
-		std::cout << s << std::endl;
 
 		if constexpr (sizeof...(args) > 0)
 			parenthesize_internal(result, name, args...);
@@ -39,6 +37,8 @@ protected:
 	}
 
 public:
+	virtual ~AstPrinter() override = default;
+
 	std::variant<std::string, double, std::monostate> print(Expr& expr);
 
 	std::variant<std::string, double, std::monostate> visitBinaryExpr(Binary& expr) override;
