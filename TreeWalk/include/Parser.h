@@ -2,8 +2,10 @@
 
 #include "Token.h"
 #include "Expr.hpp"
+#include "Stmt.hpp"
 
 #include <vector>
+#include <list>
 #include <memory>
 
 class ParseError : public std::runtime_error
@@ -29,6 +31,10 @@ protected:
 	std::shared_ptr<Expr>	unary();
 	std::shared_ptr<Expr>	primary();
 
+	std::shared_ptr<Stmt>	statement();
+	std::shared_ptr<Stmt>	printStatement();
+	std::shared_ptr<Stmt>	expressionStatement();
+
 	bool					check(Token::TokenType type);
 	Token					advance();
 	bool					isAtEnd();
@@ -52,6 +58,6 @@ protected:
 public:
 	Parser(const std::vector<Token>& tokens);
 
-	std::shared_ptr<Expr>	parse();
+	std::list<std::shared_ptr<Stmt>>	parse();
 };
 

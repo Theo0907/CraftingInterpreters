@@ -28,6 +28,11 @@ void Interpreter::checkNumberOperands(Token op, Object& left, Object& right)
 	throw RuntimeError(op, "Operands must be numbers.");
 }
 
+void Interpreter::execute(Stmt& stmt)
+{
+	stmt.accept(*this);
+}
+
 std::string Interpreter::stringify(Object& object)
 {
 	return object.GetString();
@@ -108,15 +113,28 @@ Object Interpreter::visitUnaryExpr(Unary& expr)
 	return {};
 }
 
-void Interpreter::interpret(Expr& expr)
+void Interpreter::interpret(std::list<std::shared_ptr<Stmt>>& statements)
 {
 	try
 	{
-		Object value = evaluate(expr);
-		std::cout << stringify(value) << std::endl;
+		for (auto& it : statements)
+			execute(*it);
 	}
 	catch (RuntimeError error)
 	{
 		TreeWalk::RuntimeError(error.what());
 	}
+}
+
+Object Interpreter::visitExpressionStmt(Expression& stmt)
+{
+	evaluate(*stmt.expression);
+	return {};
+}
+
+Object Interpreter::visitPrintStmt(Print& stmt)
+{
+	Object value = evaluate(*stmt.expression);
+	std::cout << stringify(value) << std::endl;
+	return {};
 }

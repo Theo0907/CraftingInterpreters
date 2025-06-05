@@ -8,7 +8,7 @@ template<class T>
 concept ExprDerived = std::is_base_of<Expr, T>::value;
 
 class AstPrinter :
-    public Visitor
+    public ExprVisitor
 {
 protected:
 	template <ExprDerived... Types>

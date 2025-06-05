@@ -101,7 +101,7 @@ void Scanner::string(std::vector<Token>& result)
 
 	advance();
 
-	std::string value = source.substr(start + 1, current - start - 1);
+	std::string value = source.substr(start + 1, current - start - 2);
 	Object o{value};
 	addToken(result, Token::TokenType::STRING, value);
 }

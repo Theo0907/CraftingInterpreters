@@ -78,12 +78,12 @@ void TreeWalk::Run(const std::string& source)
 	Scanner scanner{ source };
 	std::vector<Token> tokens = scanner.ScanTokens();
 	Parser parser{ tokens };
-	std::shared_ptr<Expr>	expr = parser.parse();
+	std::list<std::shared_ptr<Stmt>> statements = parser.parse();
 
 	// Stop if syntax error
 	if (hadError)
 		return;
 
 	//std::cout << AstPrinter().print(*expr).GetString() << std::endl;
-	interpreter.interpret(*expr);
+	interpreter.interpret(statements);
 }

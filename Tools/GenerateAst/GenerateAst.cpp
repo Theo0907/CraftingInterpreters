@@ -9,6 +9,8 @@
 #include <regex>
 #include <sstream>
 #include <variant>
+#include <unordered_map>
+#include <unordered_set>
 
 struct field
 {
@@ -16,9 +18,11 @@ struct field
 	std::string name;
 };
 
+std::unordered_map<std::string, std::string>	DefinedTypes;
+
 void defineVisitor(std::ofstream& writer, const std::string& baseName, const std::vector<std::string>& fieldList)
 {
-	writer << "class Visitor\n{\npublic:\n";
+	writer << "class " << baseName << "Visitor\n{\npublic:\n";
 	std::string lowerBaseName;
 	lowerBaseName.resize(baseName.size());
 	std::transform(baseName.begin(), baseName.end(), lowerBaseName.begin(), [](unsigned char c) { return std::tolower(c); });
@@ -29,8 +33,10 @@ void defineVisitor(std::ofstream& writer, const std::string& baseName, const std
 		writer << "\tvirtual Object visit" << typeName << baseName << "(class " << typeName << "& " << lowerBaseName << ") = 0;" << std::endl;
 	};
 
-	writer << "\tvirtual ~Visitor() = default;" << std::endl;
+	writer << "\tvirtual ~" << baseName << "Visitor() = default; " << std::endl;
 	writer << "};" << std::endl << std::endl;
+
+	DefinedTypes.emplace(std::make_pair(baseName + "Visitor", baseName + ".hpp"));
 }
 
 void defineType(std::ofstream& writer, const std::string& baseName, const std::string& className, const std::string& fieldList)
@@ -49,13 +55,10 @@ void defineType(std::ofstream& writer, const std::string& baseName, const std::s
 	{
 		while (std::isspace(s[0]))
 			s = s.substr(1, s.size() - 1);
-		std::cout << s << std::endl;
 		size_t it = s.find(' ');
-		std::cout << it << std::endl;
 		field f;
 		f.name = s.substr(it + 1, s.size() - it - 1);
 		f.type = s.substr(0, it);
-		std::cout << f.type << " : " << f.name << std::endl;
 		fields.push_back(f);
 	}
 
@@ -87,10 +90,53 @@ void defineType(std::ofstream& writer, const std::string& baseName, const std::s
 	}
 
 	// Visitor pattern
-	writer << std::endl << "virtual Object accept(Visitor& visitor) \n\t{\n";
+	writer << std::endl << "virtual Object accept(" << baseName << "Visitor& visitor) \n\t{\n";
 	writer << "\t\treturn visitor.visit" << className << baseName << "(*this);\n\t}" << std::endl;
 
 	writer << "}; " << std::endl << std::endl;
+
+	DefinedTypes.emplace(std::make_pair(className, baseName + ".hpp"));
+}
+
+void defineIncludes(std::ofstream& writer, const std::string& baseName, const std::vector<std::string>& types)
+{
+	writer << "#pragma once" << std::endl;
+
+	// Include for many base types likely used in this context
+	writer << "#include \"Token.h\"" << std::endl;
+
+	std::unordered_set<std::string> requiredFiles;
+
+	// need to include all types generated previously if they are needed, cannot broadly include them as they are generated!
+	for (const std::string& it : types)
+	{
+		auto fieldsDelimitator{ it.find(':') };
+		std::stringstream fields{ it.substr(fieldsDelimitator + 1) };
+
+		std::string s;
+		while (!fields.eof())
+		{
+			std::getline(fields, s, ' ');
+			if (s.size() == 0 || s == " ")
+				continue;
+			auto found = DefinedTypes.find(s);
+			if (found != DefinedTypes.end())
+			{
+				requiredFiles.insert(found->second);
+			}
+			// Skip arg name
+			while (!fields.eof() && fields.get() != ',');
+		}
+	}
+
+	for (const std::string& it : requiredFiles)
+	{
+		writer << "#include \"" << it << "\"" << std::endl;
+	}
+
+
+	writer << "#include <memory>" << std::endl;
+	writer << "" << std::endl;
 }
 
 void defineAst(const std::string& outputDir, const std::string& baseName, const std::vector<std::string>& types)
@@ -98,15 +144,14 @@ void defineAst(const std::string& outputDir, const std::string& baseName, const 
 	std::string path = outputDir + "/" + baseName + ".hpp";
 	
 	std::ofstream writer{ path };
-	writer << "#pragma once" << std::endl;
-	writer << "#include \"Token.h\"" << std::endl;
-	writer << "#include <memory>" << std::endl;
-	writer << "" << std::endl;
+	
+	defineIncludes(writer, baseName, types);
 
 	defineVisitor(writer, baseName, types);
 
 	writer << "class " << baseName << "\n{\npublic:\nvirtual ~" << baseName << "() = default; \n";
-	writer << "\tvirtual Object accept(Visitor& visitor) = 0;" << std::endl;
+	writer << "\tvirtual Object accept(" << baseName << "Visitor& visitor) = 0; " << std::endl;
+	
 	writer << "}; " << std::endl << std::endl;
 
 
@@ -122,6 +167,8 @@ void defineAst(const std::string& outputDir, const std::string& baseName, const 
 
 		defineType(writer, baseName, className, fields);
 	}
+
+	DefinedTypes.emplace(std::make_pair(baseName, baseName + ".hpp"));
 }
 
 int main(int argc, char* argv[])
@@ -139,6 +186,11 @@ int main(int argc, char* argv[])
 			"Grouping : Expr expression",
 			"Literal  : Object value",
 			"Unary    : Token op, Expr right"
+		});
+	defineAst(outputDir, "Stmt",
+		{
+			"Expression : Expr expression",
+			"Print      : Expr expression"
 		});
 }
 

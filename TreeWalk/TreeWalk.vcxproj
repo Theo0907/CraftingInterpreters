@@ -159,6 +159,7 @@
     <ClInclude Include="include\Object.h" />
     <ClInclude Include="include\Parser.h" />
     <ClInclude Include="include\Scanner.h" />
+    <ClInclude Include="include\Stmt.hpp" />
     <ClInclude Include="include\Token.h" />
     <ClInclude Include="include\TreeWalk.h" />
   </ItemGroup>

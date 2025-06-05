@@ -1,8 +1,10 @@
 #pragma once
 
 #include "Expr.hpp"
+#include "Stmt.hpp"
 
 #include <stdexcept>
+#include <list>
 
 class RuntimeError : public std::runtime_error
 {
@@ -14,12 +16,14 @@ public:
 };
 
 class Interpreter :
-    public Visitor
+    public ExprVisitor, public StmtVisitor
 {
 protected:
 	bool	isTruthy(Object& object);
 	void	checkNumberOperand(Token op, Object& operand);
 	void	checkNumberOperands(Token op, Object& left, Object& right);
+
+	void	execute(Stmt& stmt);
 
 	std::string	stringify(Object& object);
 public:
@@ -30,6 +34,9 @@ public:
 	Object	visitLiteralExpr(Literal& expr) override;
 	Object	visitUnaryExpr(Unary& expr) override;
 
-	void	interpret(Expr& expr);
+	void	interpret(std::list<std::shared_ptr<Stmt>>& expr);
+
+	Object visitExpressionStmt(Expression& stmt) override;
+	Object visitPrintStmt(Print& stmt) override;
 };
 

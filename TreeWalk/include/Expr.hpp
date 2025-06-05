@@ -2,21 +2,21 @@
 #include "Token.h"
 #include <memory>
 
-class Visitor
+class ExprVisitor
 {
 public:
 	virtual Object visitBinaryExpr(class Binary& expr) = 0;
 	virtual Object visitGroupingExpr(class Grouping& expr) = 0;
 	virtual Object visitLiteralExpr(class Literal& expr) = 0;
 	virtual Object visitUnaryExpr(class Unary& expr) = 0;
-	virtual ~Visitor() = default;
+	virtual ~ExprVisitor() = default; 
 };
 
 class Expr
 {
 public:
 virtual ~Expr() = default; 
-	virtual Object accept(Visitor& visitor) = 0;
+	virtual Object accept(ExprVisitor& visitor) = 0; 
 }; 
 
 class Binary : public Expr
@@ -30,7 +30,7 @@ public:
 	std::shared_ptr<Token>	op;
 	std::shared_ptr<Expr>	right;
 
-virtual Object accept(Visitor& visitor) 
+virtual Object accept(ExprVisitor& visitor) 
 	{
 		return visitor.visitBinaryExpr(*this);
 	}
@@ -45,7 +45,7 @@ public:
 	{}
 	std::shared_ptr<Expr>	expression;
 
-virtual Object accept(Visitor& visitor) 
+virtual Object accept(ExprVisitor& visitor) 
 	{
 		return visitor.visitGroupingExpr(*this);
 	}
@@ -60,7 +60,7 @@ public:
 	{}
 	std::shared_ptr<Object>	value;
 
-virtual Object accept(Visitor& visitor) 
+virtual Object accept(ExprVisitor& visitor) 
 	{
 		return visitor.visitLiteralExpr(*this);
 	}
@@ -76,7 +76,7 @@ public:
 	std::shared_ptr<Token>	op;
 	std::shared_ptr<Expr>	right;
 
-virtual Object accept(Visitor& visitor) 
+virtual Object accept(ExprVisitor& visitor) 
 	{
 		return visitor.visitUnaryExpr(*this);
 	}
