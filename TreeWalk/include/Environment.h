@@ -12,6 +12,7 @@ private:
 
 public:
 	void			define(const std::string& name, const Object& value);
+	void			assign(const class Token& name, const Object& value);
 	const Object&	get(const class Token& name);
 };
 

@@ -5,6 +5,7 @@
 class ExprVisitor
 {
 public:
+	virtual Object visitAssignExpr(class Assign& expr) = 0;
 	virtual Object visitBinaryExpr(class Binary& expr) = 0;
 	virtual Object visitGroupingExpr(class Grouping& expr) = 0;
 	virtual Object visitLiteralExpr(class Literal& expr) = 0;
@@ -18,6 +19,22 @@ class Expr
 public:
 virtual ~Expr() = default; 
 	virtual Object accept(ExprVisitor& visitor) = 0; 
+}; 
+
+class Assign : public Expr
+{
+public:
+	virtual ~Assign() override {}; 
+
+	Assign(const std::shared_ptr<Token>& name, const std::shared_ptr<Expr>& value) : name{ name }, value{ value }
+	{}
+	std::shared_ptr<Token>	name;
+	std::shared_ptr<Expr>	value;
+
+virtual Object accept(ExprVisitor& visitor) 
+	{
+		return visitor.visitAssignExpr(*this);
+	}
 }; 
 
 class Binary : public Expr

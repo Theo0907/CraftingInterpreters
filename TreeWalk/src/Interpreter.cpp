@@ -153,3 +153,10 @@ Object Interpreter::visitVarStmt(Var& stmt)
 	environment.define(stmt.name->lexeme, value);
 	return value;
 }
+
+Object Interpreter::visitAssignExpr(Assign& expr)
+{
+	Object value = evaluate(*expr.value);
+	environment.assign(*expr.name, value);
+	return value;
+}

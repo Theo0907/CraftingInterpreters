@@ -36,12 +36,14 @@ public:
 	Object	visitGroupingExpr(Grouping& expr) override;
 	Object	visitLiteralExpr(Literal& expr) override;
 	Object	visitUnaryExpr(Unary& expr) override;
-	Object visitVariableExpr(Variable& expr) override;
+	Object	visitVariableExpr(Variable& expr) override;
+	Object	visitAssignExpr(Assign& expr) override;
 
 	void	interpret(std::list<std::shared_ptr<Stmt>>& expr);
 
 	Object visitExpressionStmt(Expression& stmt) override;
 	Object visitPrintStmt(Print& stmt) override;
 	Object visitVarStmt(Var& stmt) override;
+
 };
 

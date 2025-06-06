@@ -4,7 +4,30 @@
 
 std::shared_ptr<Expr> Parser::expression()
 {
-	return equality();
+	return assignment();
+}
+
+std::shared_ptr<Expr> Parser::assignment()
+{
+	std::shared_ptr<Expr> expr = equality();
+
+	if (match({ Token::TokenType::EQUAL }))
+	{
+		Token equals = previous();
+		std::shared_ptr<Expr> value = assignment();
+
+		std::shared_ptr<Variable> asVariable = dynamic_pointer_cast<Variable>(expr);
+		if (asVariable)
+		{
+			Token name = *asVariable->name;
+			return std::make_shared<Assign>(std::make_shared<Token>(name), value);
+		}
+
+		// Don't throw as we don't need to synchronize
+		error(equals, "Invalid assignment target.");
+	}
+
+	return expr;
 }
 
 std::shared_ptr<Expr> Parser::equality()
