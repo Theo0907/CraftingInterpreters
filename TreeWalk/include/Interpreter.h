@@ -2,6 +2,7 @@
 
 #include "Expr.hpp"
 #include "Stmt.hpp"
+#include "Environment.h"
 
 #include <stdexcept>
 #include <list>
@@ -19,6 +20,8 @@ class Interpreter :
     public ExprVisitor, public StmtVisitor
 {
 protected:
+	Environment environment;
+
 	bool	isTruthy(Object& object);
 	void	checkNumberOperand(Token op, Object& operand);
 	void	checkNumberOperands(Token op, Object& left, Object& right);
@@ -33,10 +36,12 @@ public:
 	Object	visitGroupingExpr(Grouping& expr) override;
 	Object	visitLiteralExpr(Literal& expr) override;
 	Object	visitUnaryExpr(Unary& expr) override;
+	Object visitVariableExpr(Variable& expr) override;
 
 	void	interpret(std::list<std::shared_ptr<Stmt>>& expr);
 
 	Object visitExpressionStmt(Expression& stmt) override;
 	Object visitPrintStmt(Print& stmt) override;
+	Object visitVarStmt(Var& stmt) override;
 };
 

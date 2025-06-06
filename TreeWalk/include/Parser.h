@@ -34,6 +34,8 @@ protected:
 	std::shared_ptr<Stmt>	statement();
 	std::shared_ptr<Stmt>	printStatement();
 	std::shared_ptr<Stmt>	expressionStatement();
+	std::shared_ptr<Stmt>	declaration();
+	std::shared_ptr<Stmt>	varDeclaration();
 
 	bool					check(Token::TokenType type);
 	Token					advance();

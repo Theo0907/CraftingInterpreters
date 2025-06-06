@@ -9,6 +9,7 @@ public:
 	virtual Object visitGroupingExpr(class Grouping& expr) = 0;
 	virtual Object visitLiteralExpr(class Literal& expr) = 0;
 	virtual Object visitUnaryExpr(class Unary& expr) = 0;
+	virtual Object visitVariableExpr(class Variable& expr) = 0;
 	virtual ~ExprVisitor() = default; 
 };
 
@@ -79,6 +80,21 @@ public:
 virtual Object accept(ExprVisitor& visitor) 
 	{
 		return visitor.visitUnaryExpr(*this);
+	}
+}; 
+
+class Variable : public Expr
+{
+public:
+	virtual ~Variable() override {}; 
+
+	Variable(const std::shared_ptr<Token>& name) : name{ name }
+	{}
+	std::shared_ptr<Token>	name;
+
+virtual Object accept(ExprVisitor& visitor) 
+	{
+		return visitor.visitVariableExpr(*this);
 	}
 }; 
 

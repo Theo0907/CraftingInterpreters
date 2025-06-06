@@ -8,6 +8,7 @@ class StmtVisitor
 public:
 	virtual Object visitExpressionStmt(class Expression& stmt) = 0;
 	virtual Object visitPrintStmt(class Print& stmt) = 0;
+	virtual Object visitVarStmt(class Var& stmt) = 0;
 	virtual ~StmtVisitor() = default; 
 };
 
@@ -45,6 +46,22 @@ public:
 virtual Object accept(StmtVisitor& visitor) 
 	{
 		return visitor.visitPrintStmt(*this);
+	}
+}; 
+
+class Var : public Stmt
+{
+public:
+	virtual ~Var() override {}; 
+
+	Var(const std::shared_ptr<Token>& name, const std::shared_ptr<Expr>& initializer) : name{ name }, initializer{ initializer }
+	{}
+	std::shared_ptr<Token>	name;
+	std::shared_ptr<Expr>	initializer;
+
+virtual Object accept(StmtVisitor& visitor) 
+	{
+		return visitor.visitVarStmt(*this);
 	}
 }; 
 

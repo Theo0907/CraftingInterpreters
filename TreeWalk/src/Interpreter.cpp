@@ -138,3 +138,18 @@ Object Interpreter::visitPrintStmt(Print& stmt)
 	std::cout << stringify(value) << std::endl;
 	return {};
 }
+
+Object Interpreter::visitVariableExpr(Variable& expr)
+{
+	return environment.get(*expr.name);
+}
+
+Object Interpreter::visitVarStmt(Var& stmt)
+{
+	Object value;
+	if (stmt.initializer != nullptr)
+		value = evaluate(*stmt.initializer);
+
+	environment.define(stmt.name->lexeme, value);
+	return value;
+}

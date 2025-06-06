@@ -185,12 +185,14 @@ int main(int argc, char* argv[])
 			"Binary   : Expr left, Token op, Expr right",
 			"Grouping : Expr expression",
 			"Literal  : Object value",
-			"Unary    : Token op, Expr right"
+			"Unary    : Token op, Expr right",
+			"Variable : Token name"
 		});
 	defineAst(outputDir, "Stmt",
 		{
 			"Expression : Expr expression",
-			"Print      : Expr expression"
+			"Print      : Expr expression",
+			"Var        : Token name, Expr initializer"
 		});
 }
 
