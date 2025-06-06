@@ -2,6 +2,7 @@
 #include "Token.h"
 #include "Object.h"
 #include <list>
+#include "Expr.hpp"
 #include <memory>
 
 class StmtVisitor
@@ -12,6 +13,7 @@ public:
 	virtual Object visitIfStmt(class If& stmt) = 0;
 	virtual Object visitPrintStmt(class Print& stmt) = 0;
 	virtual Object visitVarStmt(class Var& stmt) = 0;
+	virtual Object visitWhileStmt(class While& stmt) = 0;
 	virtual ~StmtVisitor() = default; 
 };
 
@@ -97,6 +99,22 @@ public:
 virtual Object accept(StmtVisitor& visitor) 
 	{
 		return visitor.visitVarStmt(*this);
+	}
+}; 
+
+class While : public Stmt
+{
+public:
+	virtual ~While() override {}; 
+
+	While(const std::shared_ptr<class Expr>& condition, const std::shared_ptr<class Stmt>& body) : condition{ condition }, body{ body }
+	{}
+	std::shared_ptr<class Expr>	condition;
+	std::shared_ptr<class Stmt>	body;
+
+virtual Object accept(StmtVisitor& visitor) 
+	{
+		return visitor.visitWhileStmt(*this);
 	}
 }; 
 

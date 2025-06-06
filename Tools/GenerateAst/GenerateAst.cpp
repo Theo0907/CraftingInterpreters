@@ -245,14 +245,7 @@ int main(int argc, char* argv[])
 	else
 		outputDir = argv[1];
 	std::cout << "Generating AST expr.hpp" << std::endl;
-	defineAst(outputDir, "Stmt",
-		{
-			"Block      : List<Stmt> statements",
-			"Expression : Expr expression",
-			"If         : Expr condition, Stmt thenBranch, Stmt elseBranch",
-			"Print      : Expr expression",
-			"Var        : Token name, Expr initializer"
-		});
+	
 	defineAst(outputDir, "Expr",
 		{
 			"Assign   : Token name, Expr value",
@@ -262,6 +255,16 @@ int main(int argc, char* argv[])
 			"Logical  : Expr left, Token op, Expr right",
 			"Unary    : Token op, Expr right",
 			"Variable : Token name"
+		});
+
+	defineAst(outputDir, "Stmt",
+		{
+			"Block      : List<Stmt> statements",
+			"Expression : Expr expression",
+			"If         : Expr condition, Stmt thenBranch, Stmt elseBranch",
+			"Print      : Expr expression",
+			"Var        : Token name, Expr initializer",
+			"While      : Expr condition, Stmt body"
 		});
 }
 

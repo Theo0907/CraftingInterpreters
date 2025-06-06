@@ -168,6 +168,14 @@ void Interpreter::executeBlock(const std::list<std::shared_ptr<class Stmt>>& sta
 		execute(*statement);
 }
 
+Object Interpreter::visitWhileStmt(While& stmt)
+{
+	while (isTruthy(evaluate(*stmt.condition)))
+		execute(*stmt.body);
+
+	return {};
+}
+
 Object Interpreter::visitLogicalExpr(Logical& expr)
 {
 	Object left = evaluate(*expr.left);

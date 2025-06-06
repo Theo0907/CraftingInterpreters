@@ -64,11 +64,15 @@ public:
 	Object	visitVarStmt(Var& stmt) override;
 	Object	visitBlockStmt(Block& stmt) override;
 	Object	visitIfStmt(If& stmt) override;
+	Object	visitWhileStmt(While& stmt) override;
 
 	void	executeBlock(const std::list<std::shared_ptr<class Stmt>>& statements, const std::shared_ptr<Environment>& environment);
 
 
 	// Hérité via ExprVisitor
+
+
+	// Hérité via StmtVisitor
 
 	// Hérité via StmtVisitor
 };

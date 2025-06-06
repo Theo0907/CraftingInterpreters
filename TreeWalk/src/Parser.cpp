@@ -150,10 +150,14 @@ std::shared_ptr<Expr> Parser::primary()
 
 std::shared_ptr<Stmt> Parser::statement()
 {
+	if (match({ Token::TokenType::FOR }))
+		return forStatement();
 	if (match({ Token::TokenType::IF }))
 		return ifStatement();
 	if (match({ Token::TokenType::PRINT }))
 		return printStatement();
+	if (match({ Token::TokenType::WHILE }))
+		return whileStatement();
 	if (match({ Token::TokenType::LEFT_BRACE }))
 		return std::make_shared<Block>(block());
 	return expressionStatement();
@@ -164,6 +168,72 @@ std::shared_ptr<Stmt> Parser::printStatement()
 	std::shared_ptr<Expr> value = expression();
 	consume(Token::TokenType::SEMICOLON, "Expect ';' after value.");
 	return std::make_shared<Print>(value);
+}
+
+std::shared_ptr<Stmt> Parser::forStatement()
+{
+	consume(Token::TokenType::LEFT_PAREN, "Expect '(' after 'for'.");
+
+	// for (initializer;condition;increment)
+
+	// Populating initializer
+	std::shared_ptr<Stmt> init;
+	if (match({ Token::TokenType::SEMICOLON }))
+		init = nullptr;
+	else if (match({ Token::TokenType::VAR }))
+		init = varDeclaration();
+	else
+		init = expressionStatement();
+
+	// Populating condition
+	std::shared_ptr<Expr> cond = nullptr;
+	if (!check(Token::TokenType::SEMICOLON))
+		cond = expression();
+	consume(Token::TokenType::SEMICOLON, "Expect ';' after loop condition.");
+
+	// Populating increment
+	std::shared_ptr<Expr> incr = nullptr;
+	if (!check(Token::TokenType::RIGHT_PAREN))
+		incr = expression();
+	consume(Token::TokenType::RIGHT_PAREN, "Expect ')' after for clauses.");
+
+	std::shared_ptr<Stmt> body = statement();
+
+	// Adding increment to body if needed
+	if (incr)
+	{
+		body = std::make_shared<Block>(std::list<std::shared_ptr<Stmt>>({
+			body,
+			(std::shared_ptr<Stmt>)std::make_shared<Expression>(incr)
+			}));
+	}
+
+	// Adding condition to body and forcing it if empty
+	if (!cond)
+		cond = std::make_shared<Literal>(std::make_shared<Object>(true));
+	body = std::make_shared<While>(cond, body);
+
+	// Adding initializer to body if needed
+	if (init)
+	{
+		body = std::make_shared<Block>(std::list<std::shared_ptr<Stmt>>({
+			init,
+			body
+			}));
+	}
+
+	return body;
+}
+
+std::shared_ptr<Stmt> Parser::whileStatement()
+{
+	// TODO: Implement break statement
+	consume(Token::TokenType::LEFT_PAREN, "Expect '(' after 'while'.");
+	std::shared_ptr<Expr>	cond = expression();
+	consume(Token::TokenType::RIGHT_PAREN, "Expect ')' after 'while' condition.");
+	std::shared_ptr<Stmt>	body = statement();
+
+	return std::make_shared<While>(cond, body);
 }
 
 std::shared_ptr<Stmt> Parser::ifStatement()
