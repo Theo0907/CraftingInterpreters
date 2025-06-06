@@ -38,6 +38,8 @@ protected:
 	std::shared_ptr<Stmt>	declaration();
 	std::shared_ptr<Stmt>	varDeclaration();
 
+	std::list<std::shared_ptr<Stmt>> block();
+
 	bool					check(Token::TokenType type);
 	Token					advance();
 	bool					isAtEnd();

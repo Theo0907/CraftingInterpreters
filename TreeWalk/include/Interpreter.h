@@ -20,7 +20,24 @@ class Interpreter :
     public ExprVisitor, public StmtVisitor
 {
 protected:
-	Environment environment;
+	std::shared_ptr<Environment> environment = std::make_shared<Environment>();
+
+	class ScopedEnvironment
+	{
+		Interpreter* interpreter;
+		std::shared_ptr<Environment> prevEnvironment;
+	public:
+		ScopedEnvironment(class Interpreter* interpreter, const std::shared_ptr<Environment>& newEnvironment) : interpreter{ interpreter }
+		{
+			prevEnvironment = interpreter->environment;
+			interpreter->environment = newEnvironment;
+		}
+		~ScopedEnvironment()
+		{
+			interpreter->environment = prevEnvironment;
+		}
+	};
+	friend ScopedEnvironment;
 
 	bool	isTruthy(Object& object);
 	void	checkNumberOperand(Token op, Object& operand);
@@ -41,9 +58,11 @@ public:
 
 	void	interpret(std::list<std::shared_ptr<Stmt>>& expr);
 
-	Object visitExpressionStmt(Expression& stmt) override;
-	Object visitPrintStmt(Print& stmt) override;
-	Object visitVarStmt(Var& stmt) override;
+	Object	visitExpressionStmt(Expression& stmt) override;
+	Object	visitPrintStmt(Print& stmt) override;
+	Object	visitVarStmt(Var& stmt) override;
+	Object	visitBlockStmt(Block& stmt) override;
 
+	void	executeBlock(const std::list<std::shared_ptr<class Stmt>>& statements, const std::shared_ptr<Environment>& environment);
 };
 

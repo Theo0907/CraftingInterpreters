@@ -14,11 +14,21 @@
 
 struct field
 {
+	bool useShared = true;
+	std::string enclosingType;
 	std::string type;
 	std::string name;
 };
 
-std::unordered_map<std::string, std::string>	DefinedTypes;
+std::unordered_map<std::string, std::string>	DefinedTypes = {
+	{"List", "<list>"},
+};
+// Types that have a different name because we are using a system library to implement them.
+// These won't need a std::shared_ptr too, so other types may be put inside of this later.
+std::unordered_map<std::string, std::string>	TypeTranslationMap = {
+	{"List", "std::list"},
+	{"Shared", "std::shared_ptr"},
+};
 
 void defineVisitor(std::ofstream& writer, const std::string& baseName, const std::vector<std::string>& fieldList)
 {
@@ -36,7 +46,7 @@ void defineVisitor(std::ofstream& writer, const std::string& baseName, const std
 	writer << "\tvirtual ~" << baseName << "Visitor() = default; " << std::endl;
 	writer << "};" << std::endl << std::endl;
 
-	DefinedTypes.emplace(std::make_pair(baseName + "Visitor", baseName + ".hpp"));
+	DefinedTypes.emplace(std::make_pair(baseName + "Visitor", '"' + baseName + ".hpp\""));
 }
 
 void defineType(std::ofstream& writer, const std::string& baseName, const std::string& className, const std::string& fieldList)
@@ -59,6 +69,31 @@ void defineType(std::ofstream& writer, const std::string& baseName, const std::s
 		field f;
 		f.name = s.substr(it + 1, s.size() - it - 1);
 		f.type = s.substr(0, it);
+
+		// Search for an enclosing type
+		if (size_t pos = f.type.find('<'); pos < f.type.length())
+		{
+			f.enclosingType = f.type.substr(0, pos);
+			f.type = f.type.substr(pos + 1);
+			// Remove the '>' at the end of the type
+			f.type.pop_back();
+		}
+
+		// Use translation map to get 
+		if (auto it = TypeTranslationMap.find(f.enclosingType); it != TypeTranslationMap.end())
+		{
+			f.useShared = false;
+			f.enclosingType = it->second;
+		}
+		if (auto it = TypeTranslationMap.find(f.type); it != TypeTranslationMap.end())
+		{
+			f.useShared = false;
+			f.type = it->second;
+		}
+
+		if (f.useShared || DefinedTypes.contains(f.type))
+			f.type = "std::shared_ptr<class " + f.type + '>';
+
 		fields.push_back(f);
 	}
 
@@ -70,7 +105,13 @@ void defineType(std::ofstream& writer, const std::string& baseName, const std::s
 		if (!isFirst)
 			writer << ", ";
 		isFirst = false;
-		writer << "const std::shared_ptr<" << f.type << ">& "<< f.name;
+		std::string fullType;
+		if (f.enclosingType.size() > 0)
+			fullType = f.enclosingType + "<class " + f.type + ">";
+		else
+			fullType = f.type;
+
+		writer << "const " << fullType << "& "<< f.name;
 	}
 	writer << ") : ";
 	isFirst = true;
@@ -86,7 +127,12 @@ void defineType(std::ofstream& writer, const std::string& baseName, const std::s
 	// Storing fields in the class
 	for (const field& f : fields)
 	{
-		writer << "\tstd::shared_ptr<" << f.type << ">\t" << f.name << ";" << std::endl;
+		std::string fullType;
+		if (f.enclosingType.size() > 0)
+			fullType = f.enclosingType + "<class " + f.type + ">";
+		else
+			fullType = f.type;
+		writer << "\t" << fullType << "\t" << f.name << ";" << std::endl;
 	}
 
 	// Visitor pattern
@@ -95,7 +141,7 @@ void defineType(std::ofstream& writer, const std::string& baseName, const std::s
 
 	writer << "}; " << std::endl << std::endl;
 
-	DefinedTypes.emplace(std::make_pair(className, baseName + ".hpp"));
+	DefinedTypes.emplace(std::make_pair(className, '"' + baseName + ".hpp\""));
 }
 
 void defineIncludes(std::ofstream& writer, const std::string& baseName, const std::vector<std::string>& types)
@@ -104,6 +150,7 @@ void defineIncludes(std::ofstream& writer, const std::string& baseName, const st
 
 	// Include for many base types likely used in this context
 	writer << "#include \"Token.h\"" << std::endl;
+	writer << "#include \"Object.h\"" << std::endl;
 
 	std::unordered_set<std::string> requiredFiles;
 
@@ -119,11 +166,25 @@ void defineIncludes(std::ofstream& writer, const std::string& baseName, const st
 			std::getline(fields, s, ' ');
 			if (s.size() == 0 || s == " ")
 				continue;
-			auto found = DefinedTypes.find(s);
-			if (found != DefinedTypes.end())
+			while (std::isspace(s[0]))
+				s = s.substr(1, s.size() - 1);
+			size_t it = s.find(' ');
+			field f;
+			f.type = s.substr(0, it);
+
+			// Search for an enclosing type
+			if (size_t pos = f.type.find('<'); pos < f.type.length())
 			{
-				requiredFiles.insert(found->second);
+				f.enclosingType = f.type.substr(0, pos);
+				f.type = f.type.substr(pos + 1);
+				// Remove the '>' at the end of the type
+				f.type.pop_back();
 			}
+
+			if (auto found = DefinedTypes.find(f.type); found != DefinedTypes.end())
+				requiredFiles.insert(found->second);
+			if (auto found = DefinedTypes.find(f.enclosingType); found != DefinedTypes.end())
+				requiredFiles.insert(found->second);
 			// Skip arg name
 			while (!fields.eof() && fields.get() != ',');
 		}
@@ -131,7 +192,7 @@ void defineIncludes(std::ofstream& writer, const std::string& baseName, const st
 
 	for (const std::string& it : requiredFiles)
 	{
-		writer << "#include \"" << it << "\"" << std::endl;
+		writer << "#include " << it << std::endl;
 	}
 
 
@@ -146,6 +207,9 @@ void defineAst(const std::string& outputDir, const std::string& baseName, const 
 	std::ofstream writer{ path };
 	
 	defineIncludes(writer, baseName, types);
+	
+	// Only add a defined type after generating the includes to not have a potential self include
+	DefinedTypes.emplace(std::make_pair(baseName, '"' + baseName + ".hpp\""));
 
 	defineVisitor(writer, baseName, types);
 
@@ -154,8 +218,7 @@ void defineAst(const std::string& outputDir, const std::string& baseName, const 
 	
 	writer << "}; " << std::endl << std::endl;
 
-
-	for (std::string type : types)
+	for (const std::string& type : types)
 	{
 		std::stringstream stream{ type };
 		std::string className, fields;
@@ -168,18 +231,27 @@ void defineAst(const std::string& outputDir, const std::string& baseName, const 
 		defineType(writer, baseName, className, fields);
 	}
 
-	DefinedTypes.emplace(std::make_pair(baseName, baseName + ".hpp"));
 }
 
 int main(int argc, char* argv[])
 {
+	std::string outputDir;
 	if (argc != 2)
 	{
 		std::cout << "Usage: GenerateAst <output directory>" << std::endl;
-		exit(64);
+		//exit(64);
+		outputDir = "C:\\Users\\hagry\\Documents\\ProjetsPerso\\CraftingInterpreters\\TreeWalk\\include";
 	}
+	else
+		outputDir = argv[1];
 	std::cout << "Generating AST expr.hpp" << std::endl;
-	std::string outputDir = argv[1];
+	defineAst(outputDir, "Stmt",
+		{
+			"Block      : List<Stmt> statements",
+			"Expression : Expr expression",
+			"Print      : Expr expression",
+			"Var        : Token name, Expr initializer"
+		});
 	defineAst(outputDir, "Expr",
 		{
 			"Assign   : Token name, Expr value",
@@ -188,12 +260,6 @@ int main(int argc, char* argv[])
 			"Literal  : Object value",
 			"Unary    : Token op, Expr right",
 			"Variable : Token name"
-		});
-	defineAst(outputDir, "Stmt",
-		{
-			"Expression : Expr expression",
-			"Print      : Expr expression",
-			"Var        : Token name, Expr initializer"
 		});
 }
 

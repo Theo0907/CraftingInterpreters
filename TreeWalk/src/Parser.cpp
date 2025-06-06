@@ -124,6 +124,8 @@ std::shared_ptr<Stmt> Parser::statement()
 {
 	if (match({ Token::TokenType::PRINT }))
 		return printStatement();
+	if (match({ Token::TokenType::LEFT_BRACE }))
+		return std::make_shared<Block>(block());
 	return expressionStatement();
 }
 
@@ -167,6 +169,17 @@ std::shared_ptr<Stmt> Parser::varDeclaration()
 
 	consume(Token::TokenType::SEMICOLON, "Expect ';' after variable declaration");
 	return std::make_shared<Var>(std::make_shared<Token>(name), initializer);
+}
+
+std::list<std::shared_ptr<Stmt>> Parser::block()
+{
+	std::list<std::shared_ptr<Stmt>> statements;
+
+	while (!check({ Token::TokenType::RIGHT_BRACE }) && !isAtEnd())
+		statements.push_back(declaration());
+
+	consume(Token::TokenType::RIGHT_BRACE, "Expect '}' after block.");
+	return statements;
 }
 
 bool Parser::check(Token::TokenType type)

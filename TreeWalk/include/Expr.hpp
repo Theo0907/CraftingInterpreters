@@ -1,5 +1,6 @@
 #pragma once
 #include "Token.h"
+#include "Object.h"
 #include <memory>
 
 class ExprVisitor
@@ -26,10 +27,10 @@ class Assign : public Expr
 public:
 	virtual ~Assign() override {}; 
 
-	Assign(const std::shared_ptr<Token>& name, const std::shared_ptr<Expr>& value) : name{ name }, value{ value }
+	Assign(const std::shared_ptr<class Token>& name, const std::shared_ptr<class Expr>& value) : name{ name }, value{ value }
 	{}
-	std::shared_ptr<Token>	name;
-	std::shared_ptr<Expr>	value;
+	std::shared_ptr<class Token>	name;
+	std::shared_ptr<class Expr>	value;
 
 virtual Object accept(ExprVisitor& visitor) 
 	{
@@ -42,11 +43,11 @@ class Binary : public Expr
 public:
 	virtual ~Binary() override {}; 
 
-	Binary(const std::shared_ptr<Expr>& left, const std::shared_ptr<Token>& op, const std::shared_ptr<Expr>& right) : left{ left }, op{ op }, right{ right }
+	Binary(const std::shared_ptr<class Expr>& left, const std::shared_ptr<class Token>& op, const std::shared_ptr<class Expr>& right) : left{ left }, op{ op }, right{ right }
 	{}
-	std::shared_ptr<Expr>	left;
-	std::shared_ptr<Token>	op;
-	std::shared_ptr<Expr>	right;
+	std::shared_ptr<class Expr>	left;
+	std::shared_ptr<class Token>	op;
+	std::shared_ptr<class Expr>	right;
 
 virtual Object accept(ExprVisitor& visitor) 
 	{
@@ -59,9 +60,9 @@ class Grouping : public Expr
 public:
 	virtual ~Grouping() override {}; 
 
-	Grouping(const std::shared_ptr<Expr>& expression) : expression{ expression }
+	Grouping(const std::shared_ptr<class Expr>& expression) : expression{ expression }
 	{}
-	std::shared_ptr<Expr>	expression;
+	std::shared_ptr<class Expr>	expression;
 
 virtual Object accept(ExprVisitor& visitor) 
 	{
@@ -74,9 +75,9 @@ class Literal : public Expr
 public:
 	virtual ~Literal() override {}; 
 
-	Literal(const std::shared_ptr<Object>& value) : value{ value }
+	Literal(const std::shared_ptr<class Object>& value) : value{ value }
 	{}
-	std::shared_ptr<Object>	value;
+	std::shared_ptr<class Object>	value;
 
 virtual Object accept(ExprVisitor& visitor) 
 	{
@@ -89,10 +90,10 @@ class Unary : public Expr
 public:
 	virtual ~Unary() override {}; 
 
-	Unary(const std::shared_ptr<Token>& op, const std::shared_ptr<Expr>& right) : op{ op }, right{ right }
+	Unary(const std::shared_ptr<class Token>& op, const std::shared_ptr<class Expr>& right) : op{ op }, right{ right }
 	{}
-	std::shared_ptr<Token>	op;
-	std::shared_ptr<Expr>	right;
+	std::shared_ptr<class Token>	op;
+	std::shared_ptr<class Expr>	right;
 
 virtual Object accept(ExprVisitor& visitor) 
 	{
@@ -105,9 +106,9 @@ class Variable : public Expr
 public:
 	virtual ~Variable() override {}; 
 
-	Variable(const std::shared_ptr<Token>& name) : name{ name }
+	Variable(const std::shared_ptr<class Token>& name) : name{ name }
 	{}
-	std::shared_ptr<Token>	name;
+	std::shared_ptr<class Token>	name;
 
 virtual Object accept(ExprVisitor& visitor) 
 	{

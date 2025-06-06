@@ -141,7 +141,7 @@ Object Interpreter::visitPrintStmt(Print& stmt)
 
 Object Interpreter::visitVariableExpr(Variable& expr)
 {
-	return environment.get(*expr.name);
+	return environment->get(*expr.name);
 }
 
 Object Interpreter::visitVarStmt(Var& stmt)
@@ -150,13 +150,27 @@ Object Interpreter::visitVarStmt(Var& stmt)
 	if (stmt.initializer != nullptr)
 		value = evaluate(*stmt.initializer);
 
-	environment.define(stmt.name->lexeme, value);
+	environment->define(stmt.name->lexeme, value);
 	return value;
+}
+
+Object Interpreter::visitBlockStmt(Block& stmt)
+{
+	executeBlock(stmt.statements, std::make_shared<Environment>(environment));
+	return {};
+}
+
+void Interpreter::executeBlock(const std::list<std::shared_ptr<class Stmt>>& statements, const std::shared_ptr<Environment>& newEnvironment)
+{
+	ScopedEnvironment scoped(this, newEnvironment);
+
+	for (const std::shared_ptr<Stmt> statement : statements)
+		execute(*statement);
 }
 
 Object Interpreter::visitAssignExpr(Assign& expr)
 {
 	Object value = evaluate(*expr.value);
-	environment.assign(*expr.name, value);
+	environment->assign(*expr.name, value);
 	return value;
 }
