@@ -249,6 +249,7 @@ int main(int argc, char* argv[])
 		{
 			"Block      : List<Stmt> statements",
 			"Expression : Expr expression",
+			"If         : Expr condition, Stmt thenBranch, Stmt elseBranch",
 			"Print      : Expr expression",
 			"Var        : Token name, Expr initializer"
 		});
@@ -258,6 +259,7 @@ int main(int argc, char* argv[])
 			"Binary   : Expr left, Token op, Expr right",
 			"Grouping : Expr expression",
 			"Literal  : Object value",
+			"Logical  : Expr left, Token op, Expr right",
 			"Unary    : Token op, Expr right",
 			"Variable : Token name"
 		});

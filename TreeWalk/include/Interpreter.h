@@ -39,9 +39,9 @@ protected:
 	};
 	friend ScopedEnvironment;
 
-	bool	isTruthy(Object& object);
-	void	checkNumberOperand(Token op, Object& operand);
-	void	checkNumberOperands(Token op, Object& left, Object& right);
+	bool	isTruthy(const Object& object);
+	void	checkNumberOperand(Token op, const Object& operand);
+	void	checkNumberOperands(Token op, const Object& left, const Object& right);
 
 	void	execute(Stmt& stmt);
 
@@ -55,6 +55,7 @@ public:
 	Object	visitUnaryExpr(Unary& expr) override;
 	Object	visitVariableExpr(Variable& expr) override;
 	Object	visitAssignExpr(Assign& expr) override;
+	Object	visitLogicalExpr(Logical& expr) override;
 
 	void	interpret(std::list<std::shared_ptr<Stmt>>& expr);
 
@@ -62,7 +63,13 @@ public:
 	Object	visitPrintStmt(Print& stmt) override;
 	Object	visitVarStmt(Var& stmt) override;
 	Object	visitBlockStmt(Block& stmt) override;
+	Object	visitIfStmt(If& stmt) override;
 
 	void	executeBlock(const std::list<std::shared_ptr<class Stmt>>& statements, const std::shared_ptr<Environment>& environment);
+
+
+	// Hérité via ExprVisitor
+
+	// Hérité via StmtVisitor
 };
 

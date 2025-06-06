@@ -45,7 +45,8 @@ public:
 	{}
 	Object(bool b) : data{b}
 	{}
-	Object() = default;
+	Object() : data{ std::monostate() }
+	{}
 };
 
 bool	operator==(const Object& a, const Object& b);

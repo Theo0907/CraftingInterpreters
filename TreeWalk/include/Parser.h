@@ -25,6 +25,8 @@ protected:
 
 	std::shared_ptr<Expr>	expression();
 	std::shared_ptr<Expr>	assignment();
+	std::shared_ptr<Expr>	orExpr();
+	std::shared_ptr<Expr>	andExpr();
 	std::shared_ptr<Expr>	equality();
 	std::shared_ptr<Expr>	comparaison();
 	std::shared_ptr<Expr>	term();
@@ -34,6 +36,7 @@ protected:
 
 	std::shared_ptr<Stmt>	statement();
 	std::shared_ptr<Stmt>	printStatement();
+	std::shared_ptr<Stmt>	ifStatement();
 	std::shared_ptr<Stmt>	expressionStatement();
 	std::shared_ptr<Stmt>	declaration();
 	std::shared_ptr<Stmt>	varDeclaration();

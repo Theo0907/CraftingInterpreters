@@ -9,6 +9,7 @@ class StmtVisitor
 public:
 	virtual Object visitBlockStmt(class Block& stmt) = 0;
 	virtual Object visitExpressionStmt(class Expression& stmt) = 0;
+	virtual Object visitIfStmt(class If& stmt) = 0;
 	virtual Object visitPrintStmt(class Print& stmt) = 0;
 	virtual Object visitVarStmt(class Var& stmt) = 0;
 	virtual ~StmtVisitor() = default; 
@@ -48,6 +49,23 @@ public:
 virtual Object accept(StmtVisitor& visitor) 
 	{
 		return visitor.visitExpressionStmt(*this);
+	}
+}; 
+
+class If : public Stmt
+{
+public:
+	virtual ~If() override {}; 
+
+	If(const std::shared_ptr<class Expr>& condition, const std::shared_ptr<class Stmt>& thenBranch, const std::shared_ptr<class Stmt>& elseBranch) : condition{ condition }, thenBranch{ thenBranch }, elseBranch{ elseBranch }
+	{}
+	std::shared_ptr<class Expr>	condition;
+	std::shared_ptr<class Stmt>	thenBranch;
+	std::shared_ptr<class Stmt>	elseBranch;
+
+virtual Object accept(StmtVisitor& visitor) 
+	{
+		return visitor.visitIfStmt(*this);
 	}
 }; 
 

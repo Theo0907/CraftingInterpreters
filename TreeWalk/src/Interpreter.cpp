@@ -2,7 +2,7 @@
 
 #include "TreeWalk.h"
 
-bool Interpreter::isTruthy(Object& object)
+bool Interpreter::isTruthy(const Object& object)
 {
 	if (object.IsNull())
 		return false;
@@ -13,14 +13,14 @@ bool Interpreter::isTruthy(Object& object)
 	return true;
 }
 
-void Interpreter::checkNumberOperand(Token op, Object& operand)
+void Interpreter::checkNumberOperand(Token op, const Object& operand)
 {
 	if (operand.IsNumber())
 		return;
 	throw RuntimeError(op, "Operand must be a number");
 }
 
-void Interpreter::checkNumberOperands(Token op, Object& left, Object& right)
+void Interpreter::checkNumberOperands(Token op, const Object& left, const Object& right)
 {
 	if (left.IsNumber() && right.IsNumber())
 		return;
@@ -166,6 +166,33 @@ void Interpreter::executeBlock(const std::list<std::shared_ptr<class Stmt>>& sta
 
 	for (const std::shared_ptr<Stmt> statement : statements)
 		execute(*statement);
+}
+
+Object Interpreter::visitLogicalExpr(Logical& expr)
+{
+	Object left = evaluate(*expr.left);
+
+	if (expr.op->type == Token::TokenType::OR)
+	{
+		if (isTruthy(left))
+			return left;
+	}
+	else
+	{
+		if (!isTruthy(left))
+			return left;
+	}
+	return evaluate(*expr.right);
+}
+
+Object Interpreter::visitIfStmt(If& stmt)
+{
+	if (isTruthy(evaluate(*stmt.condition)))
+		execute(*stmt.thenBranch);
+	else if (stmt.elseBranch)
+		execute(*stmt.elseBranch);
+
+	return {};
 }
 
 Object Interpreter::visitAssignExpr(Assign& expr)

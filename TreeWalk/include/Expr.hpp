@@ -10,6 +10,7 @@ public:
 	virtual Object visitBinaryExpr(class Binary& expr) = 0;
 	virtual Object visitGroupingExpr(class Grouping& expr) = 0;
 	virtual Object visitLiteralExpr(class Literal& expr) = 0;
+	virtual Object visitLogicalExpr(class Logical& expr) = 0;
 	virtual Object visitUnaryExpr(class Unary& expr) = 0;
 	virtual Object visitVariableExpr(class Variable& expr) = 0;
 	virtual ~ExprVisitor() = default; 
@@ -82,6 +83,23 @@ public:
 virtual Object accept(ExprVisitor& visitor) 
 	{
 		return visitor.visitLiteralExpr(*this);
+	}
+}; 
+
+class Logical : public Expr
+{
+public:
+	virtual ~Logical() override {}; 
+
+	Logical(const std::shared_ptr<class Expr>& left, const std::shared_ptr<class Token>& op, const std::shared_ptr<class Expr>& right) : left{ left }, op{ op }, right{ right }
+	{}
+	std::shared_ptr<class Expr>	left;
+	std::shared_ptr<class Token>	op;
+	std::shared_ptr<class Expr>	right;
+
+virtual Object accept(ExprVisitor& visitor) 
+	{
+		return visitor.visitLogicalExpr(*this);
 	}
 }; 
 

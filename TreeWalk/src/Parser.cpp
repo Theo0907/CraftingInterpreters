@@ -9,7 +9,7 @@ std::shared_ptr<Expr> Parser::expression()
 
 std::shared_ptr<Expr> Parser::assignment()
 {
-	std::shared_ptr<Expr> expr = equality();
+	std::shared_ptr<Expr> expr = orExpr();
 
 	if (match({ Token::TokenType::EQUAL }))
 	{
@@ -25,6 +25,34 @@ std::shared_ptr<Expr> Parser::assignment()
 
 		// Don't throw as we don't need to synchronize
 		error(equals, "Invalid assignment target.");
+	}
+
+	return expr;
+}
+
+std::shared_ptr<Expr> Parser::orExpr()
+{
+	std::shared_ptr<Expr> expr = andExpr();
+
+	while (match({ Token::TokenType::OR }))
+	{
+		Token op = previous();
+		std::shared_ptr<Expr> right = andExpr();
+		expr = std::make_shared<Logical>(expr, std::make_shared<Token>(op), right);
+	}
+
+	return expr;
+}
+
+std::shared_ptr<Expr> Parser::andExpr()
+{
+	std::shared_ptr<Expr> expr = equality();
+
+	while (match({ Token::TokenType::AND }))
+	{
+		Token op = previous();
+		std::shared_ptr<Expr> right = equality();
+		expr = std::make_shared<Logical>(expr, std::make_shared<Token>(op), right);
 	}
 
 	return expr;
@@ -122,6 +150,8 @@ std::shared_ptr<Expr> Parser::primary()
 
 std::shared_ptr<Stmt> Parser::statement()
 {
+	if (match({ Token::TokenType::IF }))
+		return ifStatement();
 	if (match({ Token::TokenType::PRINT }))
 		return printStatement();
 	if (match({ Token::TokenType::LEFT_BRACE }))
@@ -134,6 +164,20 @@ std::shared_ptr<Stmt> Parser::printStatement()
 	std::shared_ptr<Expr> value = expression();
 	consume(Token::TokenType::SEMICOLON, "Expect ';' after value.");
 	return std::make_shared<Print>(value);
+}
+
+std::shared_ptr<Stmt> Parser::ifStatement()
+{
+	consume(Token::TokenType::LEFT_PAREN, "Expect '(' after 'if'.");
+	std::shared_ptr<Expr>	cond = expression();
+	consume(Token::TokenType::RIGHT_PAREN, "Expect ')' after 'if' condition.");
+
+	std::shared_ptr<Stmt> thenBranch = statement();
+	std::shared_ptr<Stmt> elseBranch = nullptr;
+	if (match({ Token::TokenType::ELSE }))
+		elseBranch = statement();
+
+	return std::make_shared<If>(cond, thenBranch, elseBranch);
 }
 
 std::shared_ptr<Stmt> Parser::expressionStatement()
