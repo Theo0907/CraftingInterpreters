@@ -3,6 +3,7 @@
 #include "Expr.hpp"
 #include "Stmt.hpp"
 #include "Environment.h"
+#include "LoxCallable.h"
 
 #include <stdexcept>
 #include <list>
@@ -19,8 +20,10 @@ public:
 class Interpreter :
     public ExprVisitor, public StmtVisitor
 {
+public:
+	std::shared_ptr<Environment> globals = std::make_shared<Environment>();
 protected:
-	std::shared_ptr<Environment> environment = std::make_shared<Environment>();
+	std::shared_ptr<Environment> environment = globals;
 
 	class ScopedEnvironment
 	{
@@ -39,6 +42,14 @@ protected:
 	};
 	friend ScopedEnvironment;
 
+	class ClockNativeFunc : public LoxCallable
+	{
+	public:
+		virtual ~ClockNativeFunc() override;
+		virtual Object call(const Interpreter& interpreter, const std::list<Object>& arguments) override;
+		virtual int arity() const override;
+	};
+
 	bool	isTruthy(const Object& object);
 	void	checkNumberOperand(Token op, const Object& operand);
 	void	checkNumberOperands(Token op, const Object& left, const Object& right);
@@ -56,6 +67,7 @@ public:
 	Object	visitVariableExpr(Variable& expr) override;
 	Object	visitAssignExpr(Assign& expr) override;
 	Object	visitLogicalExpr(Logical& expr) override;
+	Object	visitCallExpr(Call& expr) override;
 
 	void	interpret(std::list<std::shared_ptr<Stmt>>& expr);
 
@@ -68,12 +80,16 @@ public:
 
 	void	executeBlock(const std::list<std::shared_ptr<class Stmt>>& statements, const std::shared_ptr<Environment>& environment);
 
-
-	// Hérité via ExprVisitor
-
-
-	// Hérité via StmtVisitor
-
-	// Hérité via StmtVisitor
+	Interpreter()
+	{
+		globals->define("clock", new ClockNativeFunc());
+	}
+	~Interpreter()
+	{
+		// delete allocated pointer (need to make a better way to do this, such as a manager for native funcs)
+		const Object& o = globals->get(Token(Token::TokenType::FUN, "clock", {}, 0));
+		if (o.IsFunction())
+			delete o.GetFunction();
+	}
 };
 

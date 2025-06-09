@@ -9,7 +9,8 @@
 class Object
 {
 public:
-	std::variant<std::string, double, bool, std::monostate> data;
+	std::variant<std::string, double, bool, class LoxCallable*, std::monostate> data;
+
 	std::string	GetString() const 
 	{
 		if (IsString())
@@ -25,17 +26,21 @@ public:
 		else if (IsNull())
 			return "nil";
 
+		// TODO: Add LoxCallable to string method
+
 		return "Data type stringify is not implemented";
 	}
 	const double&		GetNumber() const { return std::get<double>(data); }
 	bool				GetBool() const { return std::get<bool>(data); }
+	class LoxCallable*	GetFunction() const { return std::get<class LoxCallable*>(data); }
 
 	size_t				GetObjectTypeIndex() { return data.index(); }
 
 	bool				IsString() const { return data.index() == 0; }
 	bool				IsNumber() const { return data.index() == 1; }
 	bool				IsBool() const { return data.index() == 2; }
-	bool				IsNull() const { return data.index() == 3; }
+	bool				IsFunction() const { return data.index() == 3; }
+	bool				IsNull() const { return data.index() == 4; }
 
 	Object(const std::string& s) : data{s} 
 	{}
@@ -45,6 +50,8 @@ public:
 	{}
 	Object(bool b) : data{b}
 	{}
+	Object(class LoxCallable* lc) : data{lc}
+	{ }
 	Object() : data{ std::monostate() }
 	{}
 };

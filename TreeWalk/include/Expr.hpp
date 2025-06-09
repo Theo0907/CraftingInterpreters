@@ -1,6 +1,7 @@
 #pragma once
 #include "Token.h"
 #include "Object.h"
+#include <list>
 #include <memory>
 
 class ExprVisitor
@@ -8,6 +9,7 @@ class ExprVisitor
 public:
 	virtual Object visitAssignExpr(class Assign& expr) = 0;
 	virtual Object visitBinaryExpr(class Binary& expr) = 0;
+	virtual Object visitCallExpr(class Call& expr) = 0;
 	virtual Object visitGroupingExpr(class Grouping& expr) = 0;
 	virtual Object visitLiteralExpr(class Literal& expr) = 0;
 	virtual Object visitLogicalExpr(class Logical& expr) = 0;
@@ -53,6 +55,23 @@ public:
 virtual Object accept(ExprVisitor& visitor) 
 	{
 		return visitor.visitBinaryExpr(*this);
+	}
+}; 
+
+class Call : public Expr
+{
+public:
+	virtual ~Call() override {}; 
+
+	Call(const std::shared_ptr<class Expr>& callee, const std::shared_ptr<class Token>& paren, const std::list<class std::shared_ptr<class Expr>>& arguments) : callee{ callee }, paren{ paren }, arguments{ arguments }
+	{}
+	std::shared_ptr<class Expr>	callee;
+	std::shared_ptr<class Token>	paren;
+	std::list<class std::shared_ptr<class Expr>>	arguments;
+
+virtual Object accept(ExprVisitor& visitor) 
+	{
+		return visitor.visitCallExpr(*this);
 	}
 }; 
 
