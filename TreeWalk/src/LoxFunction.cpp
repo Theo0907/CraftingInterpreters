@@ -2,7 +2,7 @@
 
 #include "Interpreter.h"
 
-LoxFunction::LoxFunction(Function declaration) : declaration{ declaration }
+LoxFunction::LoxFunction(Function declaration, const std::shared_ptr<class Environment>& closure) : declaration{ declaration }, closure{ closure }
 {
 }
 
@@ -12,7 +12,7 @@ LoxFunction::~LoxFunction()
 
 Object LoxFunction::call(Interpreter& interpreter, const std::list<Object>& arguments)
 {
-	std::shared_ptr<Environment> env = std::make_shared<Environment>(interpreter.globals);
+	std::shared_ptr<Environment> env = std::make_shared<Environment>(closure);
 
 	{
 		auto param = declaration.params.begin();

@@ -184,7 +184,7 @@ Object Interpreter::visitReturnStmt(Return& stmt)
 
 Object Interpreter::visitFunctionStmt(Function& stmt)
 {
-	std::shared_ptr<LoxFunction> fun = std::make_shared<LoxFunction>(stmt);
+	std::shared_ptr<LoxFunction> fun = std::make_shared<LoxFunction>(stmt, environment);
 	environment->define(stmt.name->lexeme, { fun });
 	return {};
 }

@@ -9,8 +9,9 @@ class LoxFunction :
 {
 public:
 	Function	declaration;
+	std::shared_ptr<class Environment>	closure;
 
-	LoxFunction(Function declaration);
+	LoxFunction(Function declaration, const std::shared_ptr<class Environment>& closure);
 
 	virtual ~LoxFunction() override;
 

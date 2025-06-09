@@ -1,17 +1,13 @@
-var start = clock();
-fun fib(n) {
-  if (n <= 1) return n;
-  return fib(n - 2) + fib(n - 1);
-}
-print "Function register time: ";
-print clock() - start;
+fun makeCounter() {
+  var i = 0;
+  fun count() {
+    i = i + 1;
+    print i;
+  }
 
-for (var i = 0; i < 20; i = i + 1) {
-    var loop = clock();
-    print fib(i);
-    print "Took "; 
-    print clock() - loop;
+  return count;
 }
 
-print "Total: " ;
-print clock() - start;
+var counter = makeCounter();
+counter(); // "1".
+counter(); // "2".
