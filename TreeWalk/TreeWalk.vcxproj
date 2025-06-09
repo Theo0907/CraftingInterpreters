@@ -147,6 +147,7 @@
     <ClCompile Include="src\Environment.cpp" />
     <ClCompile Include="src\Interpreter.cpp" />
     <ClCompile Include="src\LoxCallable.cpp" />
+    <ClCompile Include="src\LoxFunction.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Object.cpp" />
     <ClCompile Include="src\Parser.cpp" />
@@ -160,6 +161,7 @@
     <ClInclude Include="include\Expr.hpp" />
     <ClInclude Include="include\Interpreter.h" />
     <ClInclude Include="include\LoxCallable.h" />
+    <ClInclude Include="include\LoxFunction.h" />
     <ClInclude Include="include\Object.h" />
     <ClInclude Include="include\Parser.h" />
     <ClInclude Include="include\Scanner.h" />

@@ -44,6 +44,7 @@ protected:
 	std::shared_ptr<Stmt>	expressionStatement();
 	std::shared_ptr<Stmt>	declaration();
 	std::shared_ptr<Stmt>	varDeclaration();
+	std::shared_ptr<Function>	function(const std::string& kind);
 
 	std::list<std::shared_ptr<Stmt>> block();
 

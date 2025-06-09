@@ -24,7 +24,7 @@ public:
 	std::shared_ptr<Environment> globals = std::make_shared<Environment>();
 protected:
 	std::shared_ptr<Environment> environment = globals;
-
+public:
 	class ScopedEnvironment
 	{
 		Interpreter* interpreter;
@@ -41,13 +41,14 @@ protected:
 		}
 	};
 	friend ScopedEnvironment;
-
+protected:
 	class ClockNativeFunc : public LoxCallable
 	{
 	public:
 		virtual ~ClockNativeFunc() override;
-		virtual Object call(const Interpreter& interpreter, const std::list<Object>& arguments) override;
+		virtual Object call(Interpreter& interpreter, const std::list<Object>& arguments) override;
 		virtual int arity() const override;
+		virtual std::string ToString() const override;
 	};
 
 	bool	isTruthy(const Object& object);
@@ -77,19 +78,13 @@ public:
 	Object	visitBlockStmt(Block& stmt) override;
 	Object	visitIfStmt(If& stmt) override;
 	Object	visitWhileStmt(While& stmt) override;
+	Object	visitFunctionStmt(Function& stmt) override;
 
 	void	executeBlock(const std::list<std::shared_ptr<class Stmt>>& statements, const std::shared_ptr<Environment>& environment);
 
 	Interpreter()
 	{
-		globals->define("clock", new ClockNativeFunc());
-	}
-	~Interpreter()
-	{
-		// delete allocated pointer (need to make a better way to do this, such as a manager for native funcs)
-		const Object& o = globals->get(Token(Token::TokenType::FUN, "clock", {}, 0));
-		if (o.IsFunction())
-			delete o.GetFunction();
+		globals->define("clock", { std::make_shared<ClockNativeFunc>() });
 	}
 };
 

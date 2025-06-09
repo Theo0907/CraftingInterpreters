@@ -2,6 +2,7 @@
 
 #include "TreeWalk.h"
 #include "LoxCallable.h"
+#include "LoxFunction.h"
 
 #include <format>
 #include <chrono>
@@ -172,6 +173,13 @@ void Interpreter::executeBlock(const std::list<std::shared_ptr<class Stmt>>& sta
 		execute(*statement);
 }
 
+Object Interpreter::visitFunctionStmt(Function& stmt)
+{
+	std::shared_ptr<LoxFunction> fun = std::make_shared<LoxFunction>(stmt);
+	environment->define(stmt.name->lexeme, { fun });
+	return {};
+}
+
 Object Interpreter::visitCallExpr(Call& expr)
 {
 	Object callee = evaluate(*expr.callee);
@@ -183,7 +191,7 @@ Object Interpreter::visitCallExpr(Call& expr)
 	if (!callee.IsFunction())
 		throw RuntimeError(*expr.paren, "Can only call functions and classes.");
 
-	LoxCallable* function = callee.GetFunction();
+	std::shared_ptr<class LoxCallable> function = callee.GetFunction();
 
 	if (args.size() != function->arity())
 		throw RuntimeError(*expr.paren, std::format("Expected {} arguments but got {}.", function->arity(), args.size()));
@@ -237,7 +245,7 @@ Interpreter::ClockNativeFunc::~ClockNativeFunc()
 {
 }
 
-Object Interpreter::ClockNativeFunc::call(const Interpreter&, const std::list<Object>&)
+Object Interpreter::ClockNativeFunc::call(Interpreter&, const std::list<Object>&)
 {
 	std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::nanoseconds> now = std::chrono::high_resolution_clock::now();
 	return (double)now.time_since_epoch().count() / 1e9; // Return nanoseconds duration to seconds
@@ -246,4 +254,9 @@ Object Interpreter::ClockNativeFunc::call(const Interpreter&, const std::list<Ob
 int Interpreter::ClockNativeFunc::arity() const
 {
 	return 0;
+}
+
+std::string Interpreter::ClockNativeFunc::ToString() const
+{
+	return "<clock native fn>";
 }

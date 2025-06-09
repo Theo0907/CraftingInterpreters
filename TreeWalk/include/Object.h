@@ -9,30 +9,12 @@
 class Object
 {
 public:
-	std::variant<std::string, double, bool, class LoxCallable*, std::monostate> data;
+	std::variant<std::string, double, bool, std::shared_ptr<class LoxCallable>, std::monostate> data;
 
-	std::string	GetString() const 
-	{
-		if (IsString())
-			return std::get<std::string>(data);
-		else if (IsBool())
-			return std::to_string(GetBool());
-		else if (IsNumber())
-		{
-			std::ostringstream oss;
-			oss << std::setprecision(8) << std::noshowpoint << GetNumber();
-			return oss.str();
-		}
-		else if (IsNull())
-			return "nil";
-
-		// TODO: Add LoxCallable to string method
-
-		return "Data type stringify is not implemented";
-	}
+	std::string	GetString() const;
 	const double&		GetNumber() const { return std::get<double>(data); }
 	bool				GetBool() const { return std::get<bool>(data); }
-	class LoxCallable*	GetFunction() const { return std::get<class LoxCallable*>(data); }
+	std::shared_ptr<class LoxCallable>	GetFunction() const { return std::get<std::shared_ptr<class LoxCallable>>(data); }
 
 	size_t				GetObjectTypeIndex() { return data.index(); }
 
@@ -50,7 +32,7 @@ public:
 	{}
 	Object(bool b) : data{b}
 	{}
-	Object(class LoxCallable* lc) : data{lc}
+	Object(std::shared_ptr<class LoxCallable> lc) : data{lc}
 	{ }
 	Object() : data{ std::monostate() }
 	{}

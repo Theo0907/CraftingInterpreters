@@ -10,6 +10,7 @@ class StmtVisitor
 public:
 	virtual Object visitBlockStmt(class Block& stmt) = 0;
 	virtual Object visitExpressionStmt(class Expression& stmt) = 0;
+	virtual Object visitFunctionStmt(class Function& stmt) = 0;
 	virtual Object visitIfStmt(class If& stmt) = 0;
 	virtual Object visitPrintStmt(class Print& stmt) = 0;
 	virtual Object visitVarStmt(class Var& stmt) = 0;
@@ -51,6 +52,23 @@ public:
 virtual Object accept(StmtVisitor& visitor) 
 	{
 		return visitor.visitExpressionStmt(*this);
+	}
+}; 
+
+class Function : public Stmt
+{
+public:
+	virtual ~Function() override {}; 
+
+	Function(const std::shared_ptr<class Token>& name, const std::list<class Token>& params, const std::list<class std::shared_ptr<class Stmt>>& body) : name{ name }, params{ params }, body{ body }
+	{}
+	std::shared_ptr<class Token>	name;
+	std::list<class Token>	params;
+	std::list<class std::shared_ptr<class Stmt>>	body;
+
+virtual Object accept(StmtVisitor& visitor) 
+	{
+		return visitor.visitFunctionStmt(*this);
 	}
 }; 
 

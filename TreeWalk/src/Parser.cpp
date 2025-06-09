@@ -295,6 +295,8 @@ std::shared_ptr<Stmt> Parser::declaration()
 {
 	try
 	{
+		if (match({ Token::TokenType::FUN }))
+			return function("function");
 		if (match({ Token::TokenType::VAR }))
 			return varDeclaration();
 
@@ -317,6 +319,33 @@ std::shared_ptr<Stmt> Parser::varDeclaration()
 
 	consume(Token::TokenType::SEMICOLON, "Expect ';' after variable declaration");
 	return std::make_shared<Var>(std::make_shared<Token>(name), initializer);
+}
+
+std::shared_ptr<Function> Parser::function(const std::string& kind)
+{
+	Token name = consume(Token::TokenType::IDENTIFIER, "Expect " + kind + " name.");
+
+	consume(Token::TokenType::LEFT_PAREN, "Expect '(' after " + kind + " name.");
+	std::list<Token> params;
+	if (!check(Token::TokenType::RIGHT_PAREN))
+	{
+		do
+		{
+			// TODO: This is the same as the interpreter max param check, maybe find a way to make them share this code? 
+			//			Or just use a macro or constexpr var for same value.
+			if (params.size() >= 255)
+				error(peek(), "Can't have more than 255 parameters.");
+
+			params.push_back(consume(Token::TokenType::IDENTIFIER, "Expect parameter name."));
+		} while (match({ Token::TokenType::COMMA }));
+	}
+
+	consume(Token::TokenType::RIGHT_PAREN, "Expect ')' after parameters.");
+
+	consume(Token::TokenType::LEFT_BRACE, "Expect '{' before " + kind + " body.");
+	std::list<std::shared_ptr<Stmt>> body = block();
+
+	return std::make_shared<Function>(std::make_shared<Token>(name), params, body);
 }
 
 std::list<std::shared_ptr<Stmt>> Parser::block()

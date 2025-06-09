@@ -1,13 +1,5 @@
-var a = clock();
-
-for (var i = 0; i < 1000; i = i + 1)
-{
-    var b = clock();
-    print "This is a test";
-    print clock() - b;
-    print clock() - b;
-    print clock() - a;
-    print "end loop iteration";
+fun sayHi(first, last) {
+  print "Hi, " + first + " " + last + "!";
 }
 
-print clock() - a;
+sayHi("Dear", "Reader");
