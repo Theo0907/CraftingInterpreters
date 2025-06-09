@@ -13,6 +13,7 @@ public:
 	virtual Object visitFunctionStmt(class Function& stmt) = 0;
 	virtual Object visitIfStmt(class If& stmt) = 0;
 	virtual Object visitPrintStmt(class Print& stmt) = 0;
+	virtual Object visitReturnStmt(class Return& stmt) = 0;
 	virtual Object visitVarStmt(class Var& stmt) = 0;
 	virtual Object visitWhileStmt(class While& stmt) = 0;
 	virtual ~StmtVisitor() = default; 
@@ -101,6 +102,22 @@ public:
 virtual Object accept(StmtVisitor& visitor) 
 	{
 		return visitor.visitPrintStmt(*this);
+	}
+}; 
+
+class Return : public Stmt
+{
+public:
+	virtual ~Return() override {}; 
+
+	Return(const std::shared_ptr<class Token>& keyword, const std::shared_ptr<class Expr>& value) : keyword{ keyword }, value{ value }
+	{}
+	std::shared_ptr<class Token>	keyword;
+	std::shared_ptr<class Expr>	value;
+
+virtual Object accept(StmtVisitor& visitor) 
+	{
+		return visitor.visitReturnStmt(*this);
 	}
 }; 
 

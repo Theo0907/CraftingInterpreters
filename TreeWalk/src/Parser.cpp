@@ -190,6 +190,8 @@ std::shared_ptr<Stmt> Parser::statement()
 		return ifStatement();
 	if (match({ Token::TokenType::PRINT }))
 		return printStatement();
+	if (match({ Token::TokenType::RETURN }))
+		return returnStatement();
 	if (match({ Token::TokenType::WHILE }))
 		return whileStatement();
 	if (match({ Token::TokenType::LEFT_BRACE }))
@@ -202,6 +204,17 @@ std::shared_ptr<Stmt> Parser::printStatement()
 	std::shared_ptr<Expr> value = expression();
 	consume(Token::TokenType::SEMICOLON, "Expect ';' after value.");
 	return std::make_shared<Print>(value);
+}
+
+std::shared_ptr<Stmt> Parser::returnStatement()
+{
+	Token keyword = previous();
+	std::shared_ptr<Expr> value;
+	if (!check(Token::TokenType::SEMICOLON))
+		value = expression();
+
+	consume(Token::TokenType::SEMICOLON, "Expect ';' after return value.");
+	return std::make_shared<Return>(std::make_shared<Token>(keyword), value);
 }
 
 std::shared_ptr<Stmt> Parser::forStatement()

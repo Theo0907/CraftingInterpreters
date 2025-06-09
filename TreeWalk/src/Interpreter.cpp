@@ -173,6 +173,15 @@ void Interpreter::executeBlock(const std::list<std::shared_ptr<class Stmt>>& sta
 		execute(*statement);
 }
 
+Object Interpreter::visitReturnStmt(Return& stmt)
+{
+	Object value;
+	if (stmt.value)
+		value = evaluate(*stmt.value);
+
+	throw ReturnException(value);
+}
+
 Object Interpreter::visitFunctionStmt(Function& stmt)
 {
 	std::shared_ptr<LoxFunction> fun = std::make_shared<LoxFunction>(stmt);

@@ -25,7 +25,15 @@ Object LoxFunction::call(Interpreter& interpreter, const std::list<Object>& argu
 			++arg;
 		}
 	}
-	interpreter.executeBlock(declaration.body, env);
+
+	try
+	{
+		interpreter.executeBlock(declaration.body, env);
+	}
+	catch (Interpreter::ReturnException returnValue)
+	{
+		return returnValue.value;
+	}
 
 	return {};
 }

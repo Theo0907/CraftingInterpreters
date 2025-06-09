@@ -25,6 +25,14 @@ public:
 protected:
 	std::shared_ptr<Environment> environment = globals;
 public:
+	class ReturnException : public std::runtime_error
+	{
+	public:
+		Object value;
+		ReturnException(Object value) : std::runtime_error(""), value{value}
+		{ }
+	};
+
 	class ScopedEnvironment
 	{
 		Interpreter* interpreter;
@@ -79,6 +87,7 @@ public:
 	Object	visitIfStmt(If& stmt) override;
 	Object	visitWhileStmt(While& stmt) override;
 	Object	visitFunctionStmt(Function& stmt) override;
+	Object	visitReturnStmt(Return& stmt) override;
 
 	void	executeBlock(const std::list<std::shared_ptr<class Stmt>>& statements, const std::shared_ptr<Environment>& environment);
 
@@ -86,5 +95,6 @@ public:
 	{
 		globals->define("clock", { std::make_shared<ClockNativeFunc>() });
 	}
+
 };
 
