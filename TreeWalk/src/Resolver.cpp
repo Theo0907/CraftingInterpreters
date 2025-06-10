@@ -107,7 +107,11 @@ Object Resolver::visitReturnStmt(Return& stmt)
 	if (currentFunction == FunctionType::NONE)
 		TreeWalk::Error(*stmt.keyword, "Can't return from top-level code.");
 	if (stmt.value)
+	{
+		if (currentFunction == FunctionType::INITIALIZER)
+			TreeWalk::Error(*stmt.keyword, "Can't return a value from an initializer.");
 		resolve(stmt.value);
+	}
 	return {};
 }
 
@@ -200,4 +204,53 @@ void Resolver::define(Token name)
 	if (scopes.empty())
 		return;
 	scopes.top()[name.lexeme] = true;
+}
+
+Object Resolver::visitGetExpr(Get& expr)
+{
+	resolve(expr.object);
+	return {};
+}
+
+Object Resolver::visitSetExpr(Set& expr)
+{
+	resolve(expr.value);
+	resolve(expr.object);
+	return {};
+}
+
+Object Resolver::visitThisExpr(This& expr)
+{
+	if (currentClass == ClassType::NONE)
+	{
+		TreeWalk::Error(*expr.keyword, "Can't use 'this' outside of a class.");
+		return {};
+	}
+	resolveLocal(expr, *expr.keyword);
+	return {};
+}
+
+Object Resolver::visitClassStmt(Class& stmt)
+{
+	ClassType enclosingClass = currentClass;
+	currentClass = ClassType::CLASS;
+	declare(*stmt.name);
+	define(*stmt.name);
+
+	beginScope();
+	scopes.top()["this"] = true;
+
+	for (const std::shared_ptr<Function>& method : stmt.methods)
+	{
+		// This could have been a ternary but is clearer like this (I hope)
+		FunctionType decl = FunctionType::METHOD;
+		if (method->name->lexeme == "init")
+			decl = FunctionType::INITIALIZER;
+		resolveFunction(*method, decl);
+	}
+
+	endScope();
+	currentClass = enclosingClass;
+
+	return {};
 }

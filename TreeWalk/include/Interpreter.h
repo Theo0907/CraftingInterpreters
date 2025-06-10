@@ -78,6 +78,9 @@ public:
 	Object	visitAssignExpr(Assign& expr) override;
 	Object	visitLogicalExpr(Logical& expr) override;
 	Object	visitCallExpr(Call& expr) override;
+	Object	visitGetExpr(Get& expr) override;
+	Object	visitSetExpr(Set& expr) override;
+	Object	visitThisExpr(This& expr) override;
 
 	void	interpret(std::list<std::shared_ptr<Stmt>>& expr);
 
@@ -89,6 +92,7 @@ public:
 	Object	visitWhileStmt(While& stmt) override;
 	Object	visitFunctionStmt(Function& stmt) override;
 	Object	visitReturnStmt(Return& stmt) override;
+	Object	visitClassStmt(Class& stmt) override;
 
 	void	executeBlock(const std::list<std::shared_ptr<class Stmt>>& statements, const std::shared_ptr<Environment>& environment);
 	Object	lookUpVariable(Token name, Expr& expr);
@@ -98,6 +102,5 @@ public:
 	{
 		globals->define("clock", { std::make_shared<ClockNativeFunc>() });
 	}
-
 };
 

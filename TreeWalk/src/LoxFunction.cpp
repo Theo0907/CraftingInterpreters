@@ -2,7 +2,8 @@
 
 #include "Interpreter.h"
 
-LoxFunction::LoxFunction(Function declaration, const std::shared_ptr<class Environment>& closure) : declaration{ declaration }, closure{ closure }
+LoxFunction::LoxFunction(Function declaration, const std::shared_ptr<class Environment>& closure, bool isInitializer) 
+	: declaration{ declaration }, closure{ closure }, isInitializer{ isInitializer }
 {
 }
 
@@ -32,9 +33,13 @@ Object LoxFunction::call(Interpreter& interpreter, const std::list<Object>& argu
 	}
 	catch (Interpreter::ReturnException returnValue)
 	{
+		if (isInitializer)
+			return closure->getAt(0, "this");
 		return returnValue.value;
 	}
 
+	if (isInitializer)
+		return closure->getAt(0, "this");
 	return {};
 }
 
@@ -46,6 +51,13 @@ int LoxFunction::arity() const
 std::string LoxFunction::ToString() const
 {
 	return (std::string)*this;
+}
+
+std::shared_ptr<LoxFunction> LoxFunction::bind(std::shared_ptr<class LoxInstance> instance)
+{
+	std::shared_ptr<Environment> env = std::make_shared<Environment>(closure);
+	env->define("this", instance);
+	return std::make_shared<LoxFunction>(declaration, env, isInitializer);
 }
 
 LoxFunction::operator std::string() const

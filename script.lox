@@ -1,13 +1,53 @@
-fun makeCounter() {
-  var i = 0;
-  fun count() {
-    i = i + 1;
-    print i;
+var start = clock();
+
+class Foo
+{
+  init(a, b, c)
+  {
+    this.a = a;
+    if (c)
+      this.b = b;
+    else
+      this.b = "was false";
   }
 
-  return count;
+  display()
+  {
+    print "display";
+    print this.a;
+    print this.b;
+  }
 }
 
-var counter = makeCounter();
-counter(); // "1".
-counter(); // "2".
+print "Time start: " ;
+print clock() - start;
+var before = clock();
+
+var foo1 = Foo("foo1", "was true", true);
+var foo2 = Foo("foo2", "was true", false);
+
+print "Time init: " ;
+print clock() - before;
+var mid = clock();
+
+foo1.display();
+foo2.display();
+
+print "";
+
+print "Time mid: " ;
+print clock() - mid;
+var end = clock();
+
+var d1 = foo1.display;
+var d2 = foo2.display;
+
+d1();
+d2();
+
+print "Time end: " ;
+print clock() - end;
+
+
+print "Total time: " ;
+print clock() - start;

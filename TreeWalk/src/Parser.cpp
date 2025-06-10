@@ -22,6 +22,10 @@ std::shared_ptr<Expr> Parser::assignment()
 			Token name = *asVariable->name;
 			return std::make_shared<Assign>(std::make_shared<Token>(name), value);
 		}
+		else if (std::shared_ptr<Get> asGet = std::dynamic_pointer_cast<Get>(expr))
+		{
+			return std::make_shared<Set>(asGet->object, asGet->name, value);
+		}
 
 		// Don't throw as we don't need to synchronize
 		error(equals, "Invalid assignment target.");
@@ -134,6 +138,11 @@ std::shared_ptr<Expr> Parser::call()
 	{
 		if (match({ Token::TokenType::LEFT_PAREN }))
 			expr = finishCall(expr);
+		else if (match({ Token::TokenType::DOT }))
+		{
+			Token name = consume(Token::TokenType::IDENTIFIER, "Expect property name after '.'");
+			expr = std::make_shared<Get>(expr, std::make_shared<Token>(name));
+		}
 		else
 			break;
 	}
@@ -168,6 +177,9 @@ std::shared_ptr<Expr> Parser::primary()
 
 	if (match({ Token::TokenType::NUMBER, Token::TokenType::STRING }))
 		return std::make_shared<Literal>(std::make_shared<Object>(previous().literal));
+
+	if (match({ Token::TokenType::THIS }))
+		return std::make_shared<This>(std::make_shared<Token>(previous()));
 
 	if (match({ Token::TokenType::IDENTIFIER }))
 		return std::make_shared<Variable>(std::make_shared<Token>(previous()));
@@ -308,6 +320,8 @@ std::shared_ptr<Stmt> Parser::declaration()
 {
 	try
 	{
+		if (match({ Token::TokenType::CLASS }))
+			return classDeclaration();
 		if (match({ Token::TokenType::FUN }))
 			return function("function");
 		if (match({ Token::TokenType::VAR }))
@@ -332,6 +346,19 @@ std::shared_ptr<Stmt> Parser::varDeclaration()
 
 	consume(Token::TokenType::SEMICOLON, "Expect ';' after variable declaration");
 	return std::make_shared<Var>(std::make_shared<Token>(name), initializer);
+}
+
+std::shared_ptr<Stmt> Parser::classDeclaration()
+{
+	Token name = consume(Token::TokenType::IDENTIFIER, "Expect class name.");
+	consume(Token::TokenType::LEFT_BRACE, "Expect '{' before class body.");
+
+	std::list<std::shared_ptr<Function>> methods;
+	while (!check({ Token::TokenType::RIGHT_BRACE }) && !isAtEnd())
+		methods.push_back(function("method"));
+
+	consume(Token::TokenType::RIGHT_BRACE, "Expect '}' after class body.");
+	return std::make_shared<Class>(std::make_shared<Token>(name), methods);
 }
 
 std::shared_ptr<Function> Parser::function(const std::string& kind)

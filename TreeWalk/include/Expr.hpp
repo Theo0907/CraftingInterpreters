@@ -10,9 +10,12 @@ public:
 	virtual Object visitAssignExpr(class Assign& expr) = 0;
 	virtual Object visitBinaryExpr(class Binary& expr) = 0;
 	virtual Object visitCallExpr(class Call& expr) = 0;
+	virtual Object visitGetExpr(class Get& expr) = 0;
 	virtual Object visitGroupingExpr(class Grouping& expr) = 0;
 	virtual Object visitLiteralExpr(class Literal& expr) = 0;
 	virtual Object visitLogicalExpr(class Logical& expr) = 0;
+	virtual Object visitSetExpr(class Set& expr) = 0;
+	virtual Object visitThisExpr(class This& expr) = 0;
 	virtual Object visitUnaryExpr(class Unary& expr) = 0;
 	virtual Object visitVariableExpr(class Variable& expr) = 0;
 	virtual ~ExprVisitor() = default; 
@@ -75,6 +78,22 @@ virtual Object accept(ExprVisitor& visitor)
 	}
 }; 
 
+class Get : public Expr
+{
+public:
+	virtual ~Get() override {}; 
+
+	Get(const std::shared_ptr<class Expr>& object, const std::shared_ptr<class Token>& name) : object{ object }, name{ name }
+	{}
+	std::shared_ptr<class Expr>	object;
+	std::shared_ptr<class Token>	name;
+
+virtual Object accept(ExprVisitor& visitor) 
+	{
+		return visitor.visitGetExpr(*this);
+	}
+}; 
+
 class Grouping : public Expr
 {
 public:
@@ -119,6 +138,38 @@ public:
 virtual Object accept(ExprVisitor& visitor) 
 	{
 		return visitor.visitLogicalExpr(*this);
+	}
+}; 
+
+class Set : public Expr
+{
+public:
+	virtual ~Set() override {}; 
+
+	Set(const std::shared_ptr<class Expr>& object, const std::shared_ptr<class Token>& name, const std::shared_ptr<class Expr>& value) : object{ object }, name{ name }, value{ value }
+	{}
+	std::shared_ptr<class Expr>	object;
+	std::shared_ptr<class Token>	name;
+	std::shared_ptr<class Expr>	value;
+
+virtual Object accept(ExprVisitor& visitor) 
+	{
+		return visitor.visitSetExpr(*this);
+	}
+}; 
+
+class This : public Expr
+{
+public:
+	virtual ~This() override {}; 
+
+	This(const std::shared_ptr<class Token>& keyword) : keyword{ keyword }
+	{}
+	std::shared_ptr<class Token>	keyword;
+
+virtual Object accept(ExprVisitor& visitor) 
+	{
+		return visitor.visitThisExpr(*this);
 	}
 }; 
 

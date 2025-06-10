@@ -13,8 +13,16 @@ protected:
 	{
 		NONE,
 		FUNCTION,
+		INITIALIZER,
+		METHOD,
 	};
-	FunctionType currentFunction = FunctionType::NONE;
+	enum class ClassType
+	{
+		NONE,
+		CLASS,
+	};
+	FunctionType	currentFunction =	FunctionType::NONE;
+	ClassType		currentClass =		ClassType::NONE;
 public:
 	Interpreter* interpreter;
 	std::stack<std::unordered_map<std::string, bool>> scopes;
@@ -30,6 +38,9 @@ public:
 	Object visitLogicalExpr(Logical& expr) override;
 	Object visitUnaryExpr(Unary& expr) override;
 	Object visitVariableExpr(Variable& expr) override;
+	Object visitGetExpr(Get& expr) override;
+	Object visitSetExpr(Set& expr) override;
+	Object visitThisExpr(This& expr) override;
 
 	Object visitBlockStmt(Block& stmt) override;
 	Object visitExpressionStmt(Expression& stmt) override;
@@ -39,6 +50,7 @@ public:
 	Object visitReturnStmt(Return& stmt) override;
 	Object visitVarStmt(Var& stmt) override;
 	Object visitWhileStmt(While& stmt) override;
+	Object visitClassStmt(Class& stmt) override;
 
 	void	resolve(std::list<std::shared_ptr<Stmt>> statements);
 	void	resolve(const std::shared_ptr<Stmt>& stmt);

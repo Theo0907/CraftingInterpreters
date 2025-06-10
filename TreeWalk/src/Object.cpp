@@ -1,5 +1,7 @@
 #include "Object.h"
 #include "LoxFunction.h"
+#include "LoxClass.h"
+#include "LoxInstance.h"
 
 bool operator==(const Object& a, const Object& b)
 {
@@ -22,8 +24,22 @@ std::string Object::GetString() const
 		return "nil";
 	else if (IsFunction())
 		return GetFunction()->ToString();
+	else if (IsClass())
+		return GetClass()->ToString();
+	else if (IsInstance())
+		return GetInstance()->ToString();
 
 	// TODO: Add LoxCallable to string method
 
 	return "Data type stringify is not implemented";
+}
+
+std::shared_ptr<LoxCallable> Object::GetFunction() const
+{
+	if (IsFunction())
+		return std::get<std::shared_ptr<LoxCallable>>(data);
+	else if (IsClass())
+		return std::dynamic_pointer_cast<LoxCallable>(GetClass());
+
+	return {};
 }

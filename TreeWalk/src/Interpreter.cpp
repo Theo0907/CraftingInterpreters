@@ -3,6 +3,8 @@
 #include "TreeWalk.h"
 #include "LoxCallable.h"
 #include "LoxFunction.h"
+#include "LoxClass.h"
+#include "LoxInstance.h"
 
 #include <format>
 #include <chrono>
@@ -190,6 +192,38 @@ void Interpreter::resolve(Expr& expr, int depth)
 	locals.emplace(&expr, depth);
 }
 
+Object Interpreter::visitSetExpr(Set& expr)
+{
+	Object o = evaluate(*expr.object);
+
+	if (!o.IsInstance())
+		throw RuntimeError(*expr.name, "Only instances have fields.");
+
+	Object value = evaluate(*expr.value);
+	o.GetInstance()->set(*expr.name, value);
+
+	return {};
+}
+
+Object Interpreter::visitThisExpr(This& expr)
+{
+	return lookUpVariable(*expr.keyword, expr);
+}
+
+Object Interpreter::visitClassStmt(Class& stmt)
+{
+	environment->define(stmt.name->lexeme, {});
+
+	std::unordered_map<std::string, std::shared_ptr<LoxFunction>> methods;
+	for (const std::shared_ptr<Function>& method : stmt.methods)
+		methods.emplace(method->name->lexeme, std::make_shared<LoxFunction>(*method, environment, method->name->lexeme == "init")); // Checking if this is the initializer
+
+	std::shared_ptr<LoxClass> klass = std::make_shared<LoxClass>(stmt.name->lexeme, methods);
+	klass->selfShared = klass;
+	environment->assign(*stmt.name, { klass });
+	return {};
+}
+
 Object Interpreter::visitReturnStmt(Return& stmt)
 {
 	Object value;
@@ -201,7 +235,7 @@ Object Interpreter::visitReturnStmt(Return& stmt)
 
 Object Interpreter::visitFunctionStmt(Function& stmt)
 {
-	std::shared_ptr<LoxFunction> fun = std::make_shared<LoxFunction>(stmt, environment);
+	std::shared_ptr<LoxFunction> fun = std::make_shared<LoxFunction>(stmt, environment, false);
 	environment->define(stmt.name->lexeme, { fun });
 	return {};
 }
@@ -214,7 +248,7 @@ Object Interpreter::visitCallExpr(Call& expr)
 	for (const std::shared_ptr<Expr>& arg : expr.arguments)
 		args.push_back(evaluate(*arg));
 
-	if (!callee.IsFunction())
+	if (!callee.IsFunction() && !callee.IsClass())
 		throw RuntimeError(*expr.paren, "Can only call functions and classes.");
 
 	std::shared_ptr<class LoxCallable> function = callee.GetFunction();
@@ -223,6 +257,17 @@ Object Interpreter::visitCallExpr(Call& expr)
 		throw RuntimeError(*expr.paren, std::format("Expected {} arguments but got {}.", function->arity(), args.size()));
 
 	return function->call(*this, args);
+}
+
+Object Interpreter::visitGetExpr(Get& expr)
+{
+	Object o = evaluate(*expr.object);
+	if (o.IsInstance())
+	{
+		return o.GetInstance()->get(*expr.name);
+	}
+
+	throw RuntimeError(*expr.name, "Only instances have properties.");
 }
 
 Object Interpreter::visitWhileStmt(While& stmt)
