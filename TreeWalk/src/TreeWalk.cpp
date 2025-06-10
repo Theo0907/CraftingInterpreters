@@ -4,6 +4,7 @@
 #include "Scanner.h"
 #include "Parser.h"
 #include "AstPrinter.h"
+#include "Resolver.h"
 
 #include <cstddef>
 #include <fstream>
@@ -81,6 +82,13 @@ void TreeWalk::Run(const std::string& source)
 	std::list<std::shared_ptr<Stmt>> statements = parser.parse();
 
 	// Stop if syntax error
+	if (hadError)
+		return;
+
+	Resolver resolver(&interpreter);
+	resolver.resolve(statements);
+
+	// Stop if resolution error
 	if (hadError)
 		return;
 

@@ -146,7 +146,7 @@ Object Interpreter::visitPrintStmt(Print& stmt)
 
 Object Interpreter::visitVariableExpr(Variable& expr)
 {
-	return environment->get(*expr.name);
+	return lookUpVariable(*expr.name, expr);
 }
 
 Object Interpreter::visitVarStmt(Var& stmt)
@@ -171,6 +171,23 @@ void Interpreter::executeBlock(const std::list<std::shared_ptr<class Stmt>>& sta
 
 	for (const std::shared_ptr<Stmt> statement : statements)
 		execute(*statement);
+}
+
+Object Interpreter::lookUpVariable(Token name, Expr& expr)
+{
+	auto it = locals.find(&expr);
+	if (it != locals.end())
+	{
+		int dist = it->second;
+		return environment->getAt(dist, name.lexeme);
+	}
+	else
+		return globals->get(name);
+}
+
+void Interpreter::resolve(Expr& expr, int depth)
+{
+	locals.emplace(&expr, depth);
 }
 
 Object Interpreter::visitReturnStmt(Return& stmt)
@@ -246,7 +263,15 @@ Object Interpreter::visitIfStmt(If& stmt)
 Object Interpreter::visitAssignExpr(Assign& expr)
 {
 	Object value = evaluate(*expr.value);
-	environment->assign(*expr.name, value);
+
+	auto it = locals.find(&expr);
+	if (it != locals.end())
+	{
+		int dist = it->second;
+		environment->assignAt(dist, *expr.name, value);
+	}
+	else
+		globals->assign(*expr.name, value);
 	return value;
 }
 

@@ -21,6 +21,7 @@ class Interpreter :
     public ExprVisitor, public StmtVisitor
 {
 public:
+	std::unordered_map<Expr*, int>	locals;
 	std::shared_ptr<Environment> globals = std::make_shared<Environment>();
 protected:
 	std::shared_ptr<Environment> environment = globals;
@@ -90,6 +91,8 @@ public:
 	Object	visitReturnStmt(Return& stmt) override;
 
 	void	executeBlock(const std::list<std::shared_ptr<class Stmt>>& statements, const std::shared_ptr<Environment>& environment);
+	Object	lookUpVariable(Token name, Expr& expr);
+	void	resolve(Expr& expr, int depth);
 
 	Interpreter()
 	{

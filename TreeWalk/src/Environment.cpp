@@ -26,6 +26,11 @@ void Environment::assign(const Token& name, const Object& value)
 	throw RuntimeError(name, "Undefined variable '" + name.lexeme + "'.");
 }
 
+void Environment::assignAt(int dist, const Token& name, const Object& value)
+{
+	ancestor(dist)->values[name.lexeme] = value;
+}
+
 const Object& Environment::get(const Token& name)
 {
 	auto it = values.find(name.lexeme);
@@ -36,4 +41,17 @@ const Object& Environment::get(const Token& name)
 		return enclosing->get(name);
 
 	throw RuntimeError(name, "Undefined variable '" + name.lexeme + "'");
+}
+
+const Object& Environment::getAt(int dist, const std::string& name)
+{
+	return ancestor(dist)->values[name];
+}
+
+Environment* Environment::ancestor(int distance)
+{
+	Environment* env = this;
+	for (int i = 0; i < distance && env->enclosing; ++i)
+		env = env->enclosing.get();
+	return env;
 }
