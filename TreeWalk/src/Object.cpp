@@ -29,8 +29,6 @@ std::string Object::GetString() const
 	else if (IsInstance())
 		return GetInstance()->ToString();
 
-	// TODO: Add LoxCallable to string method
-
 	return "Data type stringify is not implemented";
 }
 

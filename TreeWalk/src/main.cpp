@@ -8,6 +8,9 @@
 #include "Token.h"
 #include "AstPrinter.h"
 
+// TODO: Add tracy and trace everything for both performance and memory leak
+// TODO: Check and prevent circular dependancy of std::shared_ptr (will probably need more advanced code generator to properly take when to use a shared pointer in GenerateAST)
+
 int main(int argc, char* argv[])
 {
 	/*Binary b{

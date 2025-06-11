@@ -206,6 +206,17 @@ void Resolver::define(Token name)
 	scopes.top()[name.lexeme] = true;
 }
 
+Object Resolver::visitSuperExpr(Super& expr)
+{
+	if (currentClass == ClassType::NONE)
+		TreeWalk::Error(*expr.keyword, "Can't use 'super' outside of a class.");
+	else if (currentClass != ClassType::SUBCLASS)
+		TreeWalk::Error(*expr.keyword, "Can't use 'super' in a class with no subclass.");
+
+	resolveLocal(expr, *expr.keyword);
+	return {};
+}
+
 Object Resolver::visitGetExpr(Get& expr)
 {
 	resolve(expr.object);
@@ -237,6 +248,18 @@ Object Resolver::visitClassStmt(Class& stmt)
 	declare(*stmt.name);
 	define(*stmt.name);
 
+	if (stmt.superclass)
+	{
+		if (stmt.name->lexeme == stmt.superclass->name->lexeme)
+			TreeWalk::Error(*stmt.superclass->name, "A class can't inherit from itself.");
+
+		currentClass = ClassType::SUBCLASS;
+		resolve(stmt.superclass);
+
+		beginScope(); // Need to create a new scope as this is bound at runtime and super cannot be known reliably by that point.
+		scopes.top()["super"] = true;
+	}
+
 	beginScope();
 	scopes.top()["this"] = true;
 
@@ -250,6 +273,8 @@ Object Resolver::visitClassStmt(Class& stmt)
 	}
 
 	endScope();
+	if (stmt.superclass)
+		endScope();
 	currentClass = enclosingClass;
 
 	return {};

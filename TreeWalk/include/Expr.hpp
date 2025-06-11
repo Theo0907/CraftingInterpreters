@@ -15,6 +15,7 @@ public:
 	virtual Object visitLiteralExpr(class Literal& expr) = 0;
 	virtual Object visitLogicalExpr(class Logical& expr) = 0;
 	virtual Object visitSetExpr(class Set& expr) = 0;
+	virtual Object visitSuperExpr(class Super& expr) = 0;
 	virtual Object visitThisExpr(class This& expr) = 0;
 	virtual Object visitUnaryExpr(class Unary& expr) = 0;
 	virtual Object visitVariableExpr(class Variable& expr) = 0;
@@ -155,6 +156,22 @@ public:
 virtual Object accept(ExprVisitor& visitor) 
 	{
 		return visitor.visitSetExpr(*this);
+	}
+}; 
+
+class Super : public Expr
+{
+public:
+	virtual ~Super() override {}; 
+
+	Super(const std::shared_ptr<class Token>& keyword, const std::shared_ptr<class Token>& method) : keyword{ keyword }, method{ method }
+	{}
+	std::shared_ptr<class Token>	keyword;
+	std::shared_ptr<class Token>	method;
+
+virtual Object accept(ExprVisitor& visitor) 
+	{
+		return visitor.visitSuperExpr(*this);
 	}
 }; 
 

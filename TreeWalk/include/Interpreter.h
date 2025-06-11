@@ -81,6 +81,7 @@ public:
 	Object	visitGetExpr(Get& expr) override;
 	Object	visitSetExpr(Set& expr) override;
 	Object	visitThisExpr(This& expr) override;
+	Object	visitSuperExpr(Super& expr) override;
 
 	void	interpret(std::list<std::shared_ptr<Stmt>>& expr);
 

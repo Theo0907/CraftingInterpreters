@@ -64,9 +64,10 @@ class Class : public Stmt
 public:
 	virtual ~Class() override {}; 
 
-	Class(const std::shared_ptr<class Token>& name, const std::list<class std::shared_ptr<class Function>>& methods) : name{ name }, methods{ methods }
+	Class(const std::shared_ptr<class Token>& name, const std::shared_ptr<class Variable>& superclass, const std::list<class std::shared_ptr<class Function>>& methods) : name{ name }, superclass{ superclass }, methods{ methods }
 	{}
 	std::shared_ptr<class Token>	name;
+	std::shared_ptr<class Variable>	superclass;
 	std::list<class std::shared_ptr<class Function>>	methods;
 
 virtual Object accept(StmtVisitor& visitor) 

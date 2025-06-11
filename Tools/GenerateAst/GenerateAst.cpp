@@ -256,6 +256,7 @@ int main(int argc, char* argv[])
 			"Literal  : Object value",
 			"Logical  : Expr left, Token op, Expr right",
 			"Set      : Expr object, Token name, Expr value",
+			"Super    : Token keyword, Token method",
 			"This     : Token keyword",
 			"Unary    : Token op, Expr right",
 			"Variable : Token name"
@@ -264,8 +265,9 @@ int main(int argc, char* argv[])
 	defineAst(outputDir, "Stmt",
 		{
 			"Block      : List<Stmt> statements",
+
 			"Function   : Token name, List<Token> params, List<Stmt> body",
-			"Class      : Token name, List<Function> methods",
+			"Class      : Token name, Variable superclass, List<Function> methods",
 			"Expression : Expr expression",
 			"If         : Expr condition, Stmt thenBranch, Stmt elseBranch",
 			"Print      : Expr expression",

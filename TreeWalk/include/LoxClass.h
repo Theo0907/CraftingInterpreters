@@ -11,8 +11,10 @@ public:
 	std::string name;
 	std::weak_ptr<LoxClass> selfShared;
 	std::unordered_map<std::string, std::shared_ptr<class LoxFunction>> methods;
+	std::shared_ptr<LoxClass>	superclass;
 
-	LoxClass(const std::string& name, const std::unordered_map<std::string, std::shared_ptr<LoxFunction>>& methods) : name{ name }, methods{ methods }
+	LoxClass(const std::string& name, const std::shared_ptr<LoxClass>& superclass, const std::unordered_map<std::string, std::shared_ptr<LoxFunction>>& methods)
+		: name{ name }, superclass{ superclass }, methods{ methods }
 	{ }
 
 	operator std::string() const

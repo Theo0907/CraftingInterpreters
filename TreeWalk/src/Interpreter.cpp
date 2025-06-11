@@ -192,6 +192,18 @@ void Interpreter::resolve(Expr& expr, int depth)
 	locals.emplace(&expr, depth);
 }
 
+Object Interpreter::visitSuperExpr(Super& expr)
+{
+	int dist = locals[&expr];
+	std::shared_ptr<LoxClass> superclass = environment->getAt(dist, "super").GetClass();
+	std::shared_ptr<LoxInstance> object = environment->getAt(dist - 1, "this").GetInstance();
+
+	std::shared_ptr<LoxFunction> method = superclass->findMethod(expr.method->lexeme);
+	if (!method)
+		throw RuntimeError(*expr.method, "Undefined property '" + expr.method->lexeme + "'.");
+	return { method->bind(object) };
+}
+
 Object Interpreter::visitSetExpr(Set& expr)
 {
 	Object o = evaluate(*expr.object);
@@ -212,14 +224,32 @@ Object Interpreter::visitThisExpr(This& expr)
 
 Object Interpreter::visitClassStmt(Class& stmt)
 {
+	std::shared_ptr<LoxClass> superclass;
+	if (stmt.superclass)
+	{
+		Object super = evaluate(*stmt.superclass);
+		if (!super.IsClass())
+			throw RuntimeError(*stmt.superclass->name, "Superclass must be a class.");
+		superclass = super.GetClass();
+	}
 	environment->define(stmt.name->lexeme, {});
+
+	if (stmt.superclass)
+	{
+		environment = std::make_shared<Environment>(environment);
+		environment->define("super", superclass);
+	}
 
 	std::unordered_map<std::string, std::shared_ptr<LoxFunction>> methods;
 	for (const std::shared_ptr<Function>& method : stmt.methods)
 		methods.emplace(method->name->lexeme, std::make_shared<LoxFunction>(*method, environment, method->name->lexeme == "init")); // Checking if this is the initializer
 
-	std::shared_ptr<LoxClass> klass = std::make_shared<LoxClass>(stmt.name->lexeme, methods);
+	std::shared_ptr<LoxClass> klass = std::make_shared<LoxClass>(stmt.name->lexeme, superclass, methods);
 	klass->selfShared = klass;
+
+	if (superclass)
+		environment = environment->enclosing;
+
 	environment->assign(*stmt.name, { klass });
 	return {};
 }

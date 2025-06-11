@@ -20,6 +20,7 @@ protected:
 	{
 		NONE,
 		CLASS,
+		SUBCLASS,
 	};
 	FunctionType	currentFunction =	FunctionType::NONE;
 	ClassType		currentClass =		ClassType::NONE;
@@ -41,6 +42,7 @@ public:
 	Object visitGetExpr(Get& expr) override;
 	Object visitSetExpr(Set& expr) override;
 	Object visitThisExpr(This& expr) override;
+	Object visitSuperExpr(Super& expr) override;
 
 	Object visitBlockStmt(Block& stmt) override;
 	Object visitExpressionStmt(Expression& stmt) override;
