@@ -12,6 +12,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{863C65FB
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GenerateAst", "Tools\GenerateAst\GenerateAst.vcxproj", "{91B73986-9FB3-444A-BA95-0E2635BA2F5F}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BytecodeVirtualMachine", "BytecodeVirtualMachine\BytecodeVirtualMachine.vcxproj", "{9E3735AE-8E5C-400D-9578-BA073C8934B7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -26,6 +28,10 @@ Global
 		{91B73986-9FB3-444A-BA95-0E2635BA2F5F}.Debug|x64.Build.0 = Debug|x64
 		{91B73986-9FB3-444A-BA95-0E2635BA2F5F}.Release|x64.ActiveCfg = Release|x64
 		{91B73986-9FB3-444A-BA95-0E2635BA2F5F}.Release|x64.Build.0 = Release|x64
+		{9E3735AE-8E5C-400D-9578-BA073C8934B7}.Debug|x64.ActiveCfg = Debug|x64
+		{9E3735AE-8E5C-400D-9578-BA073C8934B7}.Debug|x64.Build.0 = Debug|x64
+		{9E3735AE-8E5C-400D-9578-BA073C8934B7}.Release|x64.ActiveCfg = Release|x64
+		{9E3735AE-8E5C-400D-9578-BA073C8934B7}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,1 +1,1 @@
-Following the [Crafting Interpreters](https://craftinginterpreters.com/contents.html) tutorial to create a working interpreter, using C++ instead of Java
+Following the [Crafting Interpreters](https://craftinginterpreters.com/contents.html) tutorial to create a working lox interpreter, using C++ instead of Java for the TreeWalk interpreter (jlox) and for the c bytecode interpreter (clox)
