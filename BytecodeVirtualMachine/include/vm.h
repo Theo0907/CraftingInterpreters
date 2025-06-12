@@ -3,6 +3,8 @@
 #include "common.h"
 #include "value.h"
 
+#include <string>
+
 enum InterpretResult
 {
 	INTERPRET_OK,
@@ -23,7 +25,7 @@ struct VM
 	VM();
 	~VM();
 
-	InterpretResult interpret(struct Chunk* chunk);
+	InterpretResult interpret(const std::string& source);
 private:
 	InterpretResult	run();
 	void			resetStack();

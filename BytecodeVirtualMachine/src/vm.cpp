@@ -3,6 +3,7 @@
 #include "chunk.h"
 #include "value.h"
 #include "debug.h"
+#include "compiler.h"
 
 #include <iostream>
 
@@ -14,13 +15,15 @@ VM::~VM()
 {
 }
 
-InterpretResult VM::interpret(Chunk* inChunk)
+InterpretResult VM::interpret(const std::string& source)
 {
-	chunk = inChunk;
+	compile(source);
+	return INTERPRET_OK;
+	/*chunk = inChunk;
 	ip = chunk->code.data();
 
 	resetStack();
-	return run();
+	return run();*/
 }
 
 InterpretResult VM::run()

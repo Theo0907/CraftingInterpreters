@@ -19,8 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="include\debug.cpp" />
-    <ClCompile Include="include\vm.cpp" />
+    <ClCompile Include="include\scanner.cpp" />
+    <ClCompile Include="src\compiler.cpp" />
+    <ClCompile Include="src\debug.cpp" />
+    <ClCompile Include="src\vm.cpp" />
     <ClCompile Include="src\chunk.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\value.cpp" />
@@ -28,7 +30,9 @@
   <ItemGroup>
     <ClInclude Include="include\chunk.h" />
     <ClInclude Include="include\common.h" />
+    <ClInclude Include="include\compiler.h" />
     <ClInclude Include="include\debug.h" />
+    <ClInclude Include="include\scanner.h" />
     <ClInclude Include="include\value.h" />
     <ClInclude Include="include\vm.h" />
   </ItemGroup>
