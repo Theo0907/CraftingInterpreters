@@ -17,19 +17,20 @@ VM::~VM()
 
 InterpretResult VM::interpret(const std::string& source)
 {
-	compile(source);
-	return INTERPRET_OK;
-	/*chunk = inChunk;
-	ip = chunk->code.data();
+	chunk = Chunk();
+	if (!compile(source, &chunk))
+		return INTERPRET_COMPILE_ERROR;
+
+	ip = chunk.code.data();
 
 	resetStack();
-	return run();*/
+	return run();
 }
 
 InterpretResult VM::run()
 {
 #define READ_BYTE() (*ip++)
-#define READ_CONSTANT() (chunk->constants[READ_BYTE()])
+#define READ_CONSTANT() (chunk.constants[READ_BYTE()])
 #define BINARY_OP(op)\
 	do {\
 		double b = pop();\
@@ -48,7 +49,7 @@ InterpretResult VM::run()
 			std::cout << " ]";
 		}
 		std::cout << std::endl;
-		disassembleInstruction(chunk, (int)(ip - chunk->code.data()));
+		disassembleInstruction(&chunk, (int)(ip - chunk.code.data()));
 #endif
 		uint8_t instruction;
 		switch (instruction = READ_BYTE())

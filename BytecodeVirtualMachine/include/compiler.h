@@ -1,7 +1,8 @@
 #pragma once
 
 #include "common.h"
+#include "chunk.h"
 
 #include <string>
 
-void compile(const std::string& source);
+bool compile(const std::string& source, Chunk* chunk);

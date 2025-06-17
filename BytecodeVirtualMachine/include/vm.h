@@ -2,6 +2,7 @@
 
 #include "common.h"
 #include "value.h"
+#include "chunk.h"
 
 #include <string>
 
@@ -17,7 +18,7 @@ enum InterpretResult
 
 struct VM
 {
-	struct Chunk* chunk = nullptr;
+	Chunk chunk ;
 	uint8_t* ip = nullptr;
 	Value				stack[STACK_MAX];
 	Value*				stackTop = nullptr;

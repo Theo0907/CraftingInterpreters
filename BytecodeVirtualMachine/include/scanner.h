@@ -23,7 +23,9 @@ enum TokenType {
 	TOKEN_PRINT, TOKEN_RETURN, TOKEN_SUPER, TOKEN_THIS,
 	TOKEN_TRUE, TOKEN_VAR, TOKEN_WHILE,
 
-	TOKEN_ERROR, TOKEN_EOF
+	TOKEN_ERROR, TOKEN_EOF,
+
+	TOKEN_COUNT
 };
 
 struct Token
@@ -42,6 +44,7 @@ struct Scanner
 
 	Token	scanToken();
 
+protected:
 	Token	makeToken(TokenType type);
 	Token	errorToken(const char* message);
 	Token	string();
@@ -49,7 +52,9 @@ struct Scanner
 	Token	identifier();
 	TokenType identifierType();
 	
+public:
 	bool	isAtEnd() const;
+protected:
 	char	advance();
 	char	peek() const;
 	char	peekNext() const;
