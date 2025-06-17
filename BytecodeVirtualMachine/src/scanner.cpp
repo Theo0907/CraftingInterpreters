@@ -36,7 +36,7 @@ bool Scanner::match(char expected)
 
 TokenType Scanner::checkKeyword(int start, int len, const char* rest, TokenType type)
 {
-	if ((current - source.begin()) == (start + len) && memcmp(source.data() + start, rest, len))
+	if ((current - source.begin()) == (start + len) && memcmp(source.data() + start, rest, len) == 0)
 		return type;
 	return TOKEN_IDENTIFIER;
 }
