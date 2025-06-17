@@ -5,6 +5,7 @@
 #include "debug.h"
 #include "compiler.h"
 
+#include <format>
 #include <iostream>
 
 VM::VM() : stack()
@@ -27,12 +28,22 @@ InterpretResult VM::interpret(const std::string& source)
 	return run();
 }
 
+static bool isFalsey(Value value)
+{
+	return value.isNil() || value.isBool() && !(bool)value;
+}
+
 InterpretResult VM::run()
 {
 #define READ_BYTE() (*ip++)
 #define READ_CONSTANT() (chunk.constants[READ_BYTE()])
 #define BINARY_OP(op)\
 	do {\
+		if (!peek(0).isNumber() || !peek(1).isNumber())\
+		{\
+			runtimeError("Operands must be numbers.");\
+			return INTERPRET_RUNTIME_ERROR;\
+		}\
 		double b = pop();\
 		double a = pop();\
 		push(a op b);\
@@ -57,11 +68,32 @@ InterpretResult VM::run()
 		case OP_CONSTANT:
 			push(READ_CONSTANT());
 			break;
+		case OP_NIL: push({}); break;
+		case OP_TRUE: push(true); break;
+		case OP_FALSE: push(false); break;
+		case OP_EQUAL: 
+		{
+			Value b = pop();
+			Value a = pop();
+			push(a == b);
+			break;
+		}
+		case OP_GREATER:  BINARY_OP(>); break;
+		case OP_LESS:     BINARY_OP(<); break;
 		case OP_ADD:      BINARY_OP(+); break;
 		case OP_SUBTRACT: BINARY_OP(-); break;
 		case OP_MULTIPLY: BINARY_OP(*); break;
 		case OP_DIVIDE:   BINARY_OP(/); break;
-		case OP_NEGATE:push(-pop());break;
+		case OP_NOT:
+			push(isFalsey(pop()));
+			break;
+		case OP_NEGATE:
+			if (!peek(0).isNumber())
+			{
+				runtimeError("Operand must be a number.");
+				return INTERPRET_RUNTIME_ERROR;
+			}
+			push(-(double)pop());break;
 		case OP_RETURN:
 			printValue(pop());
 			std::cout << std::endl;
@@ -86,4 +118,21 @@ void VM::push(Value value)
 Value VM::pop()
 {
 	return (*--stackTop);
+}
+
+Value VM::peek(int dist)
+{
+	// Stack top is not the first element but the next element to be executed, it will always be at least index 1 as long as there is something in the stack
+	return stackTop[-1-dist];
+}
+
+// TODO: Maybe re-add variadic param to use std::format dynamically instead of relying on doing it in the message
+void VM::runtimeError(const std::string& message)
+{
+	std::cerr << message << std::endl;
+
+	size_t instruction = ip - chunk.code.data() - 1;
+	int line = chunk.lineInfo[instruction];
+	std::cerr << std::format("[line {}] in script\n", line);
+	resetStack();
 }

@@ -5,5 +5,13 @@
 
 void printValue(Value value)
 {
-	std::cout << std::format("'{:g}'", value);
+	switch (value.type)
+	{
+	case VAL_BOOL:
+		std::cout << ((bool)value ? "true" : "false"); break;
+	case VAL_NIL:
+		std::cout << "nil"; break;
+	case VAL_NUMBER:
+		std::cout << std::format("'{:g}'", (double)value); break;
+	}
 }

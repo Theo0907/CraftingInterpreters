@@ -33,4 +33,7 @@ private:
 
 	void			push(Value value);
 	Value			pop();
+	Value			peek(int dist);
+
+	void			runtimeError(const std::string& message);
 };

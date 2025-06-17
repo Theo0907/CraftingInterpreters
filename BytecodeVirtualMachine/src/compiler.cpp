@@ -86,6 +86,7 @@ public:
 	void	grouping();
 	void	unary();
 	void	binary();
+	void	literal();
 	void	parsePrecedence(Precedence precedence);
 
 	ParseRule rules[TOKEN_COUNT];
@@ -231,6 +232,9 @@ void Parser::unary()
 	// Emit the operator instruction
 	switch (opType)
 	{
+	case TOKEN_BANG: 
+		compiler.emitByte(OP_NOT);
+		break;
 	case TOKEN_MINUS:
 		compiler.emitByte(OP_NEGATE);
 		break;
@@ -246,10 +250,27 @@ void Parser::binary()
 
 	switch (operatorType) 
 	{
+	case TOKEN_BANG_EQUAL:    compiler.emitBytes(OP_EQUAL, OP_NOT); break;
+	case TOKEN_EQUAL_EQUAL:   compiler.emitByte(OP_EQUAL); break;
+	case TOKEN_GREATER:       compiler.emitByte(OP_GREATER); break;
+	case TOKEN_GREATER_EQUAL: compiler.emitBytes(OP_LESS, OP_NOT); break;
+	case TOKEN_LESS:          compiler.emitByte(OP_LESS); break;
+	case TOKEN_LESS_EQUAL:    compiler.emitBytes(OP_GREATER, OP_NOT); break;
 	case TOKEN_PLUS:          compiler.emitByte(OP_ADD); break;
 	case TOKEN_MINUS:         compiler.emitByte(OP_SUBTRACT); break;
 	case TOKEN_STAR:          compiler.emitByte(OP_MULTIPLY); break;
 	case TOKEN_SLASH:         compiler.emitByte(OP_DIVIDE); break;
+	default: return; // Unreachable.
+	}
+}
+
+void Parser::literal()
+{
+	switch (previous.type)
+	{
+	case TOKEN_FALSE: compiler.emitByte(OP_FALSE); break;
+	case TOKEN_NIL: compiler.emitByte(OP_NIL); break;
+	case TOKEN_TRUE: compiler.emitByte(OP_TRUE); break;
 	default: return; // Unreachable.
 	}
 }
@@ -288,36 +309,36 @@ void Parser::InitRules()
  {NULL,     NULL,   PREC_NONE},// [TOKEN_SEMICOLON]
  {NULL,     &Parser::binary, PREC_FACTOR},// [TOKEN_SLASH]
  {NULL,     &Parser::binary, PREC_FACTOR},// [TOKEN_STAR]
- {NULL,     NULL,   PREC_NONE},// [TOKEN_BANG]
- {NULL,     NULL,   PREC_NONE},// [TOKEN_BANG_EQUAL]
+ {&Parser::unary,     NULL,   PREC_NONE},// [TOKEN_BANG]
+ {NULL,     &Parser::binary,   PREC_EQUALITY},// [TOKEN_BANG_EQUAL]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_EQUAL]
- {NULL,     NULL,   PREC_NONE},// [TOKEN_EQUAL_EQUAL]
- {NULL,     NULL,   PREC_NONE},// [TOKEN_GREATER]
- {NULL,     NULL,   PREC_NONE},// [TOKEN_GREATER_EQUAL]
- {NULL,     NULL,   PREC_NONE},// [TOKEN_LESS]
- {NULL,     NULL,   PREC_NONE},// [TOKEN_LESS_EQUAL]
+ {NULL,     &Parser::binary,   PREC_EQUALITY},// [TOKEN_EQUAL_EQUAL]
+ {NULL,     &Parser::binary,   PREC_COMPARISON},// [TOKEN_GREATER]
+ {NULL,     &Parser::binary,   PREC_COMPARISON},// [TOKEN_GREATER_EQUAL]
+ {NULL,     &Parser::binary,   PREC_COMPARISON},// [TOKEN_LESS]
+ {NULL,     &Parser::binary,   PREC_COMPARISON},// [TOKEN_LESS_EQUAL]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_IDENTIFIER]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_STRING]
  {&Parser::number,   NULL,   PREC_NONE},// [TOKEN_NUMBER]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_AND]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_CLASS]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_ELSE]
- {NULL,     NULL,   PREC_NONE},// [TOKEN_FALSE]
+ {&Parser::literal,     NULL,   PREC_NONE},// [TOKEN_FALSE]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_FOR]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_FUN]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_IF]
- {NULL,     NULL,   PREC_NONE},// [TOKEN_NIL]
+ {&Parser::literal,     NULL,   PREC_NONE},// [TOKEN_NIL]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_OR]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_PRINT]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_RETURN]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_SUPER]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_THIS]
- {NULL,     NULL,   PREC_NONE},// [TOKEN_TRUE]
+ {&Parser::literal,     NULL,   PREC_NONE},// [TOKEN_TRUE]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_VAR]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_WHILE]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_ERROR]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_EOF]
-	};
+	}; 
 	for (int i = 0; i < TOKEN_COUNT; ++i)
 		rules[i] = tempRules[i];
 }
