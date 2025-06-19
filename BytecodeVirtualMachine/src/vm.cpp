@@ -14,12 +14,13 @@ VM::VM() : stack()
 
 VM::~VM()
 {
+	freeObjects();
 }
 
 InterpretResult VM::interpret(const std::string& source)
 {
 	chunk = Chunk();
-	if (!compile(source, &chunk))
+	if (!compile(this, source, &chunk))
 		return INTERPRET_COMPILE_ERROR;
 
 	ip = chunk.code.data();
@@ -31,6 +32,25 @@ InterpretResult VM::interpret(const std::string& source)
 static bool isFalsey(Value value)
 {
 	return value.isNil() || value.isBool() && !(bool)value;
+}
+
+Value VM::concatenate(Value a, Value b)
+{
+	ObjString* strA = static_cast<ObjString*>(a.as.obj);
+	ObjString* strB = static_cast<ObjString*>(b.as.obj);
+
+	int len = strA->length + strB->length;
+	char* chars = (char*)malloc(sizeof(char) * len);
+	if (chars == nullptr)
+	{
+		std::cerr << "Could not allocate string" << std::endl;
+		return {};
+	}
+	memcpy(chars, strA->chars, strA->length);
+	memcpy(chars + strA->length, strB->chars, strB->length);
+	chars[len] = '\0';
+
+	return { this, len, chars };
 }
 
 InterpretResult VM::run()
@@ -80,7 +100,25 @@ InterpretResult VM::run()
 		}
 		case OP_GREATER:  BINARY_OP(>); break;
 		case OP_LESS:     BINARY_OP(<); break;
-		case OP_ADD:      BINARY_OP(+); break;
+		case OP_ADD:
+		{
+			if (peek(0).isString() && peek(1).isString())
+			{
+				Value b = pop();
+				push(concatenate(pop(), b));
+				break;
+			}
+			else if (peek(0).isNumber() && peek(1).isNumber())
+			{
+				BINARY_OP(+);
+				break;
+			}
+			else
+			{
+				runtimeError("Operands must be two numbers or two string.");
+				return INTERPRET_RUNTIME_ERROR;
+			}
+		}
 		case OP_SUBTRACT: BINARY_OP(-); break;
 		case OP_MULTIPLY: BINARY_OP(*); break;
 		case OP_DIVIDE:   BINARY_OP(/); break;
@@ -108,6 +146,36 @@ InterpretResult VM::run()
 void VM::resetStack()
 {
 	stackTop = stack;
+}
+
+void VM::freeVM()
+{
+	freeObjects();
+}
+
+void VM::freeObjects()
+{
+	Obj* object = objects;
+	while (object != nullptr)
+	{
+		Obj* next = object->next;
+		freeObject(object);
+		object = next;
+	}
+	objects = nullptr;
+}
+
+void VM::freeObject(Obj* object)
+{
+	switch (object->type)
+	{
+	case OBJ_STRING:
+	{
+		ObjString* string = (ObjString*)object;
+		free(string->chars);
+		delete string;
+	}
+	}
 }
 
 void VM::push(Value value)

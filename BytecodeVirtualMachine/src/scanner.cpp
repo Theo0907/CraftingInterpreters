@@ -74,7 +74,7 @@ void Scanner::skipWhitespace()
 
 Token Scanner::string()
 {
-	while (peek() != '"' && !isAtEnd())
+	while (!isAtEnd() && peek() != '"')
 	{
 		if (peek() == '\n')
 			++line;

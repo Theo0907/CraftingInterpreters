@@ -22,6 +22,7 @@ struct VM
 	uint8_t* ip = nullptr;
 	Value				stack[STACK_MAX];
 	Value*				stackTop = nullptr;
+	Obj*				objects = nullptr;
 
 	VM();
 	~VM();
@@ -30,10 +31,15 @@ struct VM
 private:
 	InterpretResult	run();
 	void			resetStack();
+	void			freeVM();
+	void			freeObjects();
+	void			freeObject(Obj* object);
 
 	void			push(Value value);
 	Value			pop();
 	Value			peek(int dist);
 
 	void			runtimeError(const std::string& message);
+
+	Value			concatenate(Value a, Value b);
 };

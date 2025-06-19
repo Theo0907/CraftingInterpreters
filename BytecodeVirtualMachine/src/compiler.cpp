@@ -1,6 +1,7 @@
 #include "compiler.h"
 
 #include "scanner.h"
+#include "vm.h"
 
 #ifdef DEBUG_PRINT_CODE
 #include "debug.h"
@@ -50,8 +51,9 @@ public:
 
 	Scanner& scanner;
 	class Compiler& compiler;
+	VM* vm;
 
-	Parser(Scanner& scanner, class Compiler& compiler) : scanner { scanner }, compiler{ compiler }
+	Parser(VM* vm, Scanner& scanner, class Compiler& compiler) : scanner { scanner }, compiler{ compiler }, vm{ vm }
 	{
 		InitRules();
 	}
@@ -83,6 +85,7 @@ public:
 	void	expression();
 
 	void	number();
+	void	string();
 	void	grouping();
 	void	unary();
 	void	binary();
@@ -102,11 +105,12 @@ class Compiler
 public:
 	Scanner scanner;
 	Parser parser;
+	VM* vm;
 
 	Chunk* compilingChunk;
 
 	// Maybe move what is done in this constructor to a compile func that can be called on an instance of the class, instead of the current static compile function?
-	Compiler(const std::string& source, Chunk* chunk) : scanner{ source }, parser{ scanner, *this }, compilingChunk{ chunk }
+	Compiler(const std::string& source, Chunk* chunk, VM* vm) : scanner{ source }, parser{ vm, scanner, *this }, compilingChunk{ chunk }, vm{ vm }
 	{}
 
 	Chunk* currentChunk()
@@ -165,9 +169,9 @@ static void error(class Parser& parser, const char* message)
 }
 
 
-bool compile(const std::string& source, Chunk* chunk)
+bool compile(VM* vm, const std::string& source, Chunk* chunk)
 {
-	Compiler compiler{ source, chunk };
+	Compiler compiler{ source, chunk, vm };
 	compiler.parser.advance();
 	compiler.parser.expression();
 	compiler.parser.consume(TOKEN_EOF, "Expect end of expression");
@@ -215,6 +219,11 @@ void Parser::number()
 {
 	double value = std::strtod(previous.lexeme.data(), nullptr);
 	compiler.emitConstant(value);
+}
+
+void Parser::string()
+{
+	compiler.emitConstant({ vm, previous.lexeme.substr(1, previous.lexeme.length() - 2) });
 }
 
 void Parser::grouping()
@@ -318,7 +327,7 @@ void Parser::InitRules()
  {NULL,     &Parser::binary,   PREC_COMPARISON},// [TOKEN_LESS]
  {NULL,     &Parser::binary,   PREC_COMPARISON},// [TOKEN_LESS_EQUAL]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_IDENTIFIER]
- {NULL,     NULL,   PREC_NONE},// [TOKEN_STRING]
+ {&Parser::string,     NULL,   PREC_NONE},// [TOKEN_STRING]
  {&Parser::number,   NULL,   PREC_NONE},// [TOKEN_NUMBER]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_AND]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_CLASS]

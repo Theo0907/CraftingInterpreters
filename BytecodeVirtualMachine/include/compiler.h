@@ -5,4 +5,4 @@
 
 #include <string>
 
-bool compile(const std::string& source, Chunk* chunk);
+bool compile(VM* vm, const std::string& source, Chunk* chunk);

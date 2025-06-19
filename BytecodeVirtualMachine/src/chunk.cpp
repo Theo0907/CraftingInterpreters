@@ -19,5 +19,5 @@ int Chunk::addConstant(Value v)
 	// TODO: Search beforehand to see if constant already exists
 	// TODO: Add another instruction that allows to have more than 256 (a byte) worth of constants (for example: 3 bytes is 16777216 possible constants)
 	constants.push_back(v);
-	return constants.size() - 1;
+	return (int)constants.size() - 1;
 }

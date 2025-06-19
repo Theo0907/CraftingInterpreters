@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\obj.cpp" />
     <ClCompile Include="src\scanner.cpp" />
     <ClCompile Include="src\compiler.cpp" />
     <ClCompile Include="src\debug.cpp" />
@@ -35,6 +36,7 @@
     <ClInclude Include="include\scanner.h" />
     <ClInclude Include="include\value.h" />
     <ClInclude Include="include\vm.h" />
+    <ClInclude Include="include\obj.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
