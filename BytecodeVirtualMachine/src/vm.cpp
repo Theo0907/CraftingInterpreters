@@ -40,7 +40,7 @@ Value VM::concatenate(Value a, Value b)
 	ObjString* strB = static_cast<ObjString*>(b.as.obj);
 
 	int len = strA->length + strB->length;
-	char* chars = (char*)malloc(sizeof(char) * len);
+	char* chars = (char*)malloc(sizeof(char) * (len + 1));
 	if (chars == nullptr)
 	{
 		std::cerr << "Could not allocate string" << std::endl;

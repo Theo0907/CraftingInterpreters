@@ -39,19 +39,7 @@ struct Value
 	{
 	}
 	Value(struct VM* vm, int len, char* chars);
-	Value(struct VM* vm, int len, const char* inChars) : type{VAL_OBJ}
-	{
-		char* chars = (char*)malloc((len + 1) * sizeof(char));
-		if (chars == nullptr)
-		{
-			std::cerr << "Could not allocate string." << std::endl;
-			return;
-		}
-		memcpy(chars, inChars,len);
-		chars[len] = '\0';
-
-		*this = Value(vm, len, chars);
-	}
+	Value(struct VM* vm, int len, const char* inChars);
 	Value(struct VM* vm, const std::string_view& stringview) : Value(vm, (int)stringview.length(), stringview.data())
 	{
 
@@ -70,6 +58,8 @@ struct Value
 	bool	isString() { return isObj() && getObjType() == OBJ_STRING; }
 	int		getStringLen() { return static_cast<ObjString*>(as.obj)->length; }
 	char*	getStringChars() { return static_cast<ObjString*>(as.obj)->chars; }
+	void	initStringFromPointer(struct VM* vm, int len, char* chars);
+	void	initStringFromString(struct VM* vm, int len, const char* inChars);
 
 	operator bool()
 	{
