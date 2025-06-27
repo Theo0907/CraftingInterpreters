@@ -32,7 +32,7 @@ enum Precedence
 	PREC_PRIMARY
 };
 
-using ParseFn = std::function<void(class Parser&)>;
+using ParseFn = std::function<void(class Parser&, bool)>;
 
 struct ParseRule
 {
@@ -82,15 +82,30 @@ public:
 		errorAtCurrent(*this, message);
 	}
 
-	void	expression();
+	void	synchronize();
 
-	void	number();
-	void	string();
-	void	grouping();
-	void	unary();
-	void	binary();
-	void	literal();
+	void	expression();
+	void	declaration();
+	void	varDeclaration();
+	void	statement();
+	void	printStatement();
+	void	expressionStatement();
+
+	void	number(bool canAssign);
+	void	string(bool canAssign);
+	void	variable(bool canAssign);
+	void	namedVariable(Token name, bool canAssign);
+	void	grouping(bool canAssign);
+	void	unary(bool canAssign);
+	void	binary(bool canAssign);
+	void	literal(bool canAssign);
 	void	parsePrecedence(Precedence precedence);
+	uint8_t	parseVariable(const char* errorMessage);
+	uint8_t	identifierConstant(Token* name);
+	void	defineVariable(uint8_t global);
+
+	bool	match(TokenType type);
+	bool	check(TokenType type);
 
 	ParseRule rules[TOKEN_COUNT];
 	void	InitRules(); 
@@ -173,8 +188,10 @@ bool compile(VM* vm, const std::string& source, Chunk* chunk)
 {
 	Compiler compiler{ source, chunk, vm };
 	compiler.parser.advance();
-	compiler.parser.expression();
-	compiler.parser.consume(TOKEN_EOF, "Expect end of expression");
+	while (!compiler.parser.match(TOKEN_EOF))
+	{
+		compiler.parser.declaration();
+	}
 	compiler.endCompiler();
 
 	return !compiler.parser.hadError;
@@ -210,28 +227,101 @@ void Compiler::emitBytes(uint8_t byte1, uint8_t byte2)
 	emitByte(byte2);
 }
 
+void Parser::synchronize()
+{
+	panicMode = false;
+	
+	while (current.type != TOKEN_EOF)
+	{
+		if (current.type == TOKEN_SEMICOLON)
+			return;
+		switch (current.type)
+		{
+		case TOKEN_CLASS:
+		case TOKEN_FUN:
+		case TOKEN_VAR:
+		case TOKEN_FOR:
+		case TOKEN_IF:
+		case TOKEN_WHILE:
+		case TOKEN_PRINT:
+		case TOKEN_RETURN:
+			return;
+
+		default:// Next token
+			advance();
+		}
+
+	}
+}
+
 void Parser::expression()
 {
 	parsePrecedence(PREC_ASSIGNMENT);
 }
 
-void Parser::number()
+void Parser::declaration()
+{
+	if (match(TOKEN_VAR))
+		varDeclaration();
+	else
+		statement();
+
+	if (panicMode)
+		synchronize();
+}
+
+void Parser::varDeclaration()
+{
+	uint8_t global = parseVariable("Expect variable name.");
+
+	if (match(TOKEN_EQUAL))
+		expression();
+	else
+		compiler.emitByte(OP_NIL);
+
+	consume(TOKEN_SEMICOLON, "Expect ';' after variable declaration");
+	defineVariable(global);
+}
+
+void Parser::statement()
+{
+	if (match(TOKEN_PRINT))
+		printStatement();
+	else
+		expressionStatement();
+}
+
+void Parser::printStatement()
+{
+	expression();
+	consume(TOKEN_SEMICOLON, "Expect ';' after value");
+	compiler.emitByte(OP_PRINT);
+}
+
+void Parser::expressionStatement()
+{
+	expression();
+	consume(TOKEN_SEMICOLON, "Expect ';' after expression");
+	compiler.emitByte(OP_POP);
+}
+
+void Parser::number(bool canAssign)
 {
 	double value = std::strtod(previous.lexeme.data(), nullptr);
 	compiler.emitConstant(value);
 }
 
-void Parser::string()
+void Parser::string(bool canAssign)
 {
 	compiler.emitConstant({ vm, previous.lexeme.substr(1, previous.lexeme.length() - 2) });
 }
 
-void Parser::grouping()
+void Parser::grouping(bool canAssign)
 {
 	expression();
 	consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
 }
-void Parser::unary()
+void Parser::unary(bool canAssign)
 {
 	TokenType opType = previous.type;
 
@@ -251,7 +341,7 @@ void Parser::unary()
 	}
 }
 
-void Parser::binary()
+void Parser::binary(bool canAssign)
 {
 	TokenType operatorType = previous.type;
 	ParseRule* rule = getRule(operatorType);
@@ -273,7 +363,7 @@ void Parser::binary()
 	}
 }
 
-void Parser::literal()
+void Parser::literal(bool canAssign)
 {
 	switch (previous.type)
 	{
@@ -282,6 +372,24 @@ void Parser::literal()
 	case TOKEN_TRUE: compiler.emitByte(OP_TRUE); break;
 	default: return; // Unreachable.
 	}
+}
+
+void Parser::variable(bool canAssign)
+{
+	namedVariable(previous, canAssign);
+}
+
+void Parser::namedVariable(Token name, bool canAssign)
+{
+	uint8_t arg = identifierConstant(&name);
+
+	if (canAssign && match(TOKEN_EQUAL))
+	{
+		expression();
+		compiler.emitBytes(OP_SET_GLOBAL, arg);
+	}
+	else
+		compiler.emitBytes(OP_GET_GLOBAL, arg);
 }
 
 void Parser::parsePrecedence(Precedence precedence)
@@ -293,15 +401,47 @@ void Parser::parsePrecedence(Precedence precedence)
 		error(*this, "Expect expression.");
 		return;
 	}
-
-	prefixRule(*this);
+	bool canAssign = precedence <= PREC_ASSIGNMENT;
+	prefixRule(*this, canAssign);
 
 	while (precedence <= getRule(current.type)->precedence)
 	{
 		advance();
 		ParseFn infixRule = getRule(previous.type)->infix;
-		infixRule(*this);
+		infixRule(*this, canAssign);
 	}
+
+	if (canAssign && match(TOKEN_EQUAL))
+		error(*this, "Invalid assignment target.");
+}
+
+uint8_t Parser::parseVariable(const char* errorMessage)
+{
+	consume(TOKEN_IDENTIFIER, errorMessage);
+	return identifierConstant(&previous);
+}
+
+uint8_t Parser::identifierConstant(Token* name)
+{
+	return compiler.makeConstant({vm, name->lexeme });
+}
+
+void Parser::defineVariable(uint8_t global)
+{
+	compiler.emitBytes(OP_DEFINE_GLOBAL, global);
+}
+
+bool Parser::match(TokenType type)
+{
+	if (!check(type))
+		return false;
+	advance();
+	return true;
+}
+
+bool Parser::check(TokenType type)
+{
+	return current.type == type;
 }
 
 void Parser::InitRules()
@@ -326,7 +466,7 @@ void Parser::InitRules()
  {NULL,     &Parser::binary,   PREC_COMPARISON},// [TOKEN_GREATER_EQUAL]
  {NULL,     &Parser::binary,   PREC_COMPARISON},// [TOKEN_LESS]
  {NULL,     &Parser::binary,   PREC_COMPARISON},// [TOKEN_LESS_EQUAL]
- {NULL,     NULL,   PREC_NONE},// [TOKEN_IDENTIFIER]
+ {&Parser::variable,     NULL,   PREC_NONE},// [TOKEN_IDENTIFIER]
  {&Parser::string,     NULL,   PREC_NONE},// [TOKEN_STRING]
  {&Parser::number,   NULL,   PREC_NONE},// [TOKEN_NUMBER]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_AND]

@@ -2,7 +2,7 @@
 
 #define TABLE_MAX_LOAD 0.75
 // Growth factor is 1.5, init at 8 as initial value
-#define GROW_CAPACITY(capacity) ((capacity) < 8 ? 8 : std::ceil(capacity) * 1.5)
+#define GROW_CAPACITY(capacity) ((capacity) < 8 ? 8 : static_cast<int>(std::ceil(capacity) * 1.5))
 
 Table::Table()
 {

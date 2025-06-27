@@ -56,6 +56,7 @@ struct Value
 	// Object functions
 	ObjType	getObjType() { return as.obj->type; }
 	bool	isString() { return isObj() && getObjType() == OBJ_STRING; }
+	ObjString* getStringObj() { return static_cast<ObjString*>(as.obj); }
 	int		getStringLen() { return static_cast<ObjString*>(as.obj)->length; }
 	char*	getStringChars() { return static_cast<ObjString*>(as.obj)->chars; }
 	void	initStringFromPointer(struct VM* vm, int len, char* chars, uint32_t* optionalHash = nullptr);

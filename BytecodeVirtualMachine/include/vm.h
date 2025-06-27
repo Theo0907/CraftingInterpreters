@@ -25,6 +25,8 @@ struct VM
 	Value*				stackTop = nullptr;
 	Obj*				objects = nullptr;
 	Table				strings;
+	// TODO: Put globals in an array to be able to access them faster (not needing a search every time a value is needed)
+	Table				globals;
 
 	VM();
 	~VM();

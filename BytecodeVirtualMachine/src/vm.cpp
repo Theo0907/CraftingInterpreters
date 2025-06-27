@@ -68,6 +68,7 @@ InterpretResult VM::run()
 		double a = pop();\
 		push(a op b);\
 	} while (false)
+#define READ_STRING() READ_CONSTANT().getStringObj()
 
 	while (true)
 	{
@@ -91,6 +92,37 @@ InterpretResult VM::run()
 		case OP_NIL: push({}); break;
 		case OP_TRUE: push(true); break;
 		case OP_FALSE: push(false); break;
+		case OP_POP: pop(); break;
+		case OP_GET_GLOBAL:
+		{
+			ObjString* name = READ_STRING();
+			Value value;
+			if (!globals.get(name, &value))
+			{
+				runtimeError(std::format("Undefined variable '{}'.", name->chars));
+				return INTERPRET_RUNTIME_ERROR;
+			}
+			push(value);
+			break;
+		}
+		case OP_DEFINE_GLOBAL:
+		{
+			ObjString* name = READ_STRING();
+			globals.set(name, peek(0));
+			pop();
+			break;
+		}
+		case OP_SET_GLOBAL:
+		{
+			ObjString* name = READ_STRING();
+			if (globals.set(name, peek(0)))
+			{
+				globals.remove(name);
+				runtimeError(std::format("Undefined variable '{}'.", name->chars));
+				return INTERPRET_RUNTIME_ERROR;
+			}
+			break;
+		}
 		case OP_EQUAL: 
 		{
 			Value b = pop();
@@ -132,14 +164,18 @@ InterpretResult VM::run()
 				return INTERPRET_RUNTIME_ERROR;
 			}
 			push(-(double)pop());break;
-		case OP_RETURN:
+		case OP_PRINT:
 			printValue(pop());
 			std::cout << std::endl;
+			break;
+		case OP_RETURN:
+			// Exit interpreter
 			return INTERPRET_OK;
 		}
 	}
 #undef READ_BYTE
 #undef READ_CONSTANT
+#undef READ_STRING
 #undef BINARY_OP
 }
 
