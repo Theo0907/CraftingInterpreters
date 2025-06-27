@@ -58,8 +58,8 @@ struct Value
 	bool	isString() { return isObj() && getObjType() == OBJ_STRING; }
 	int		getStringLen() { return static_cast<ObjString*>(as.obj)->length; }
 	char*	getStringChars() { return static_cast<ObjString*>(as.obj)->chars; }
-	void	initStringFromPointer(struct VM* vm, int len, char* chars);
-	void	initStringFromString(struct VM* vm, int len, const char* inChars);
+	void	initStringFromPointer(struct VM* vm, int len, char* chars, uint32_t* optionalHash = nullptr);
+	void	initStringFromString(struct VM* vm, int len, const char* inChars, uint32_t* optionalHash = nullptr);
 
 	operator bool()
 	{
@@ -84,12 +84,7 @@ struct Value
 		case VAL_BOOL: return as.boolean == (bool)other;
 		case VAL_NIL: return true;
 		case VAL_NUMBER: return as.number == (double)other;
-		case VAL_OBJ: 
-		{
-			ObjString* aStr = static_cast<ObjString*>(as.obj);
-			ObjString* bStr = static_cast<ObjString*>(other.as.obj);
-			return aStr->length == bStr->length && memcmp(aStr->chars, bStr->chars, aStr->length) == 0;
-		}
+		case VAL_OBJ: return as.obj == other.as.obj;
 		default: return false;
 		}
 	}

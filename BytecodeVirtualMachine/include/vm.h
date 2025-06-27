@@ -3,6 +3,7 @@
 #include "common.h"
 #include "value.h"
 #include "chunk.h"
+#include "table.h"
 
 #include <string>
 
@@ -23,6 +24,7 @@ struct VM
 	Value				stack[STACK_MAX];
 	Value*				stackTop = nullptr;
 	Obj*				objects = nullptr;
+	Table				strings;
 
 	VM();
 	~VM();

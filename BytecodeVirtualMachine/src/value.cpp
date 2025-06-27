@@ -7,22 +7,44 @@
 
 Value::Value(struct VM* vm, int len, char* chars) : type{ VAL_OBJ }
 {
-	initStringFromPointer(vm, len, chars);
+	uint32_t hash = ObjString::hashString(chars, len);
+	ObjString* interned = vm->strings.findKey(chars, len, hash);
+	if (interned != nullptr) // If interned string already exists, use it and free input string
+	{
+		as.obj = interned;
+		free(chars);
+	}
+	else
+		initStringFromPointer(vm, len, chars);
 }
 Value::Value(struct VM* vm, int len, const char* inChars) : type{ VAL_OBJ }
 {
-	initStringFromString(vm, len, inChars);
+	uint32_t hash = ObjString::hashString(inChars, len);
+	ObjString* interned = vm->strings.findKey(inChars, len, hash);
+	if (interned != nullptr) // If interned string already exists, use it.,
+		as.obj = interned;
+	else
+		initStringFromString(vm, len, inChars);
 }
 
-void Value::initStringFromPointer(VM* vm, int len, char* chars)
+void Value::initStringFromPointer(VM* vm, int len, char* chars, uint32_t* optionalHash)
 {
-	as.obj = new ObjString(len, chars);
+	// Use input string directly
+	uint32_t hash;
+	if (optionalHash == nullptr)
+		hash = ObjString::hashString(chars, len);
+	else
+		hash = *optionalHash;
+	ObjString* string = new ObjString(len, hash, chars);
+	as.obj = string;
 	as.obj->next = vm->objects;
 	vm->objects = as.obj;
+	vm->strings.set(string, {});
 }
 
-void Value::initStringFromString(VM* vm, int len, const char* inChars)
+void Value::initStringFromString(VM* vm, int len, const char* inChars, uint32_t* optionalHash)
 {
+	// Copy string from input
 	char* chars = (char*)malloc((len + 1) * sizeof(char));
 	if (chars == nullptr)
 	{
@@ -32,7 +54,7 @@ void Value::initStringFromString(VM* vm, int len, const char* inChars)
 	memcpy(chars, inChars, len);
 	chars[len] = '\0';
 
-	initStringFromPointer(vm, len, chars);
+	initStringFromPointer(vm, len, chars, optionalHash);
 }
 
 void printValue(Value value)

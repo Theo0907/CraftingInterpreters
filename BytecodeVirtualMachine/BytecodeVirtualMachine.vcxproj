@@ -23,6 +23,7 @@
     <ClCompile Include="src\scanner.cpp" />
     <ClCompile Include="src\compiler.cpp" />
     <ClCompile Include="src\debug.cpp" />
+    <ClCompile Include="src\table.cpp" />
     <ClCompile Include="src\vm.cpp" />
     <ClCompile Include="src\chunk.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -34,6 +35,7 @@
     <ClInclude Include="include\compiler.h" />
     <ClInclude Include="include\debug.h" />
     <ClInclude Include="include\scanner.h" />
+    <ClInclude Include="include\table.h" />
     <ClInclude Include="include\value.h" />
     <ClInclude Include="include\vm.h" />
     <ClInclude Include="include\obj.h" />
