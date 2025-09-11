@@ -41,6 +41,21 @@ struct ParseRule
 	Precedence precedence;
 };
 
+
+
+struct Local
+{
+	Token name;
+	int depth;
+};
+
+struct Locals
+{
+	Local locals[UINT8_COUNT];
+	int localCount = 0;
+	int scopeDepth = 0;
+};
+
 class Parser
 {
 public:
@@ -91,6 +106,10 @@ public:
 	void	printStatement();
 	void	expressionStatement();
 
+	void	beginScope();
+	void	endScope();
+	void	block();
+
 	void	number(bool canAssign);
 	void	string(bool canAssign);
 	void	variable(bool canAssign);
@@ -102,7 +121,12 @@ public:
 	void	parsePrecedence(Precedence precedence);
 	uint8_t	parseVariable(const char* errorMessage);
 	uint8_t	identifierConstant(Token* name);
+	bool	identifierEquals(const Token& a, const Token& b);
+	int		resolveLocal(Locals* locals, Token* name);
+	void	addLocal(const Token& name);
 	void	defineVariable(uint8_t global);
+	void	markInitialized();
+	void	declareVariable();
 
 	bool	match(TokenType type);
 	bool	check(TokenType type);
@@ -123,6 +147,8 @@ public:
 	VM* vm;
 
 	Chunk* compilingChunk;
+
+	Locals locals;
 
 	// Maybe move what is done in this constructor to a compile func that can be called on an instance of the class, instead of the current static compile function?
 	Compiler(const std::string& source, Chunk* chunk, VM* vm) : scanner{ source }, parser{ vm, scanner, *this }, compilingChunk{ chunk }, vm{ vm }
@@ -287,6 +313,12 @@ void Parser::statement()
 {
 	if (match(TOKEN_PRINT))
 		printStatement();
+	else if (match(TOKEN_LEFT_BRACE))
+	{
+		beginScope();
+		block();
+		endScope();
+	}
 	else
 		expressionStatement();
 }
@@ -303,6 +335,33 @@ void Parser::expressionStatement()
 	expression();
 	consume(TOKEN_SEMICOLON, "Expect ';' after expression");
 	compiler.emitByte(OP_POP);
+}
+
+void Parser::block()
+{
+	while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF))
+		declaration();
+
+	consume(TOKEN_RIGHT_BRACE, "Expect '}' after block");
+}
+
+void Parser::beginScope()
+{
+	++compiler.locals.scopeDepth;
+}
+
+void Parser::endScope()
+{
+	--compiler.locals.scopeDepth;
+
+	// Remove out of scope variables from locals
+	while (compiler.locals.localCount > 0 && compiler.locals.locals[compiler.locals.localCount - 1].depth > compiler.locals.scopeDepth)
+	{
+		// Pop unused variable from stack
+		// TODO: Add a popn instruction to pop n elements from the stack
+		compiler.emitByte(OP_POP);
+		--compiler.locals.localCount;
+	}
 }
 
 void Parser::number(bool canAssign)
@@ -381,15 +440,27 @@ void Parser::variable(bool canAssign)
 
 void Parser::namedVariable(Token name, bool canAssign)
 {
-	uint8_t arg = identifierConstant(&name);
+	uint8_t getOp, setOp;
+	uint8_t arg = resolveLocal(&compiler.locals, &name);
+	if (arg != -1)
+	{
+		getOp = OP_GET_LOCAL;
+		setOp = OP_SET_LOCAL;
+	}
+	else
+	{
+		arg = identifierConstant(&name);
+		getOp = OP_GET_GLOBAL;
+		setOp = OP_SET_GLOBAL;
+	}
 
 	if (canAssign && match(TOKEN_EQUAL))
 	{
 		expression();
-		compiler.emitBytes(OP_SET_GLOBAL, arg);
+		compiler.emitBytes(setOp, arg);
 	}
 	else
-		compiler.emitBytes(OP_GET_GLOBAL, arg);
+		compiler.emitBytes(getOp, arg);
 }
 
 void Parser::parsePrecedence(Precedence precedence)
@@ -418,6 +489,12 @@ void Parser::parsePrecedence(Precedence precedence)
 uint8_t Parser::parseVariable(const char* errorMessage)
 {
 	consume(TOKEN_IDENTIFIER, errorMessage);
+
+	declareVariable();
+	// If we are in a local scope, return immediatly, as this is not a global variable and thus does not need the global constant name identifier
+	if (compiler.locals.scopeDepth > 0)
+		return 0;
+
 	return identifierConstant(&previous);
 }
 
@@ -426,9 +503,78 @@ uint8_t Parser::identifierConstant(Token* name)
 	return compiler.makeConstant({vm, name->lexeme });
 }
 
+bool Parser::identifierEquals(const Token& a, const Token& b)
+{
+	// No need to compare length first as the == operator does it for us.
+	return a.lexeme == b.lexeme;
+}
+
+int Parser::resolveLocal(Locals* locals, Token* name)
+{
+	for (int i = locals->localCount - 1; i >= 0; --i)
+	{
+		Local& local = locals->locals[i];
+		if (identifierEquals(*name, local.name))
+		{
+			if (local.depth == -1)
+				error(*this, "Can't read local variable in its own initializer.");
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+void Parser::addLocal(const Token& name)
+{
+	if (compiler.locals.localCount == UINT8_COUNT)
+	{
+		error(*this, "Too many local variables in function.");
+		return;
+	}
+	// Get next local and increase count
+	Local* local = &compiler.locals.locals[compiler.locals.localCount++];
+	
+	local->name = name;
+	local->depth = -1;
+}
+
 void Parser::defineVariable(uint8_t global)
 {
+	// If we are in a local scope, there is no need to create a global variable.
+	// There also is no need to emit any byte code as a local variable lives on the stack.
+	if (compiler.locals.scopeDepth > 0)
+	{
+		// Variable is usable after this point
+		markInitialized();
+		return;
+	}
 	compiler.emitBytes(OP_DEFINE_GLOBAL, global);
+}
+
+void Parser::markInitialized()
+{
+	compiler.locals.locals[compiler.locals.localCount - 1].depth = compiler.locals.scopeDepth;
+}
+
+void Parser::declareVariable()
+{
+	// Do not declare a global variable as a local variable in the compiler
+	if (compiler.locals.scopeDepth == 0)
+		return;
+
+	const Token& name = previous;
+	for (int i = compiler.locals.localCount; i >= 0; --i)
+	{
+		const Local& local = compiler.locals.locals[i];
+		// Exit loop if depth we are beyond current depth
+		if (local.depth != -1 && local.depth < compiler.locals.scopeDepth)
+			break;
+
+		if (identifierEquals(name, local.name))
+			error(*this, "Already a variable with this name in this scope");
+	}
+	addLocal(name);
 }
 
 bool Parser::match(TokenType type)

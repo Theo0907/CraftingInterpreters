@@ -19,7 +19,8 @@ static int simpleInstruction(const std::string& name, int offset) {
 }
 
 static int constantInstruction(const std::string& name, Chunk* chunk,
-	int offset) {
+	int offset) 
+{
 	uint8_t constant = chunk->code[offset + 1];
 	//std::cout << std::setfill(' ') << std::setw(16) << std::left << name << " ";
 	//std::cout << std::right << std::format("{:*>4d} ", constant);
@@ -28,6 +29,12 @@ static int constantInstruction(const std::string& name, Chunk* chunk,
 	printValue(chunk->constants[constant]);
 	std::cout << std::endl;
 
+	return offset + 2;
+}
+static int byteInstruction(const std::string& name, Chunk* chunk, int offset)
+{
+	uint8_t slot = chunk->code[offset + 1];
+	std::cout << std::format("{:<16s} {:04d}", name, slot) << std::endl;
 	return offset + 2;
 }
 
@@ -52,6 +59,10 @@ int disassembleInstruction(Chunk* chunk, int offset)
 		return simpleInstruction("OP_FALSE", offset);
 	case OP_POP:
 		return simpleInstruction("OP_POP", offset);
+	case OP_GET_LOCAL:
+		return byteInstruction("OP_GET_LOCAL", chunk, offset);
+	case OP_SET_LOCAL:
+		return byteInstruction("OP_SET_LOCAL", chunk, offset);
 	case OP_GET_GLOBAL:
 		return constantInstruction("OP_GET_GLOBAL", chunk, offset);
 	case OP_DEFINE_GLOBAL:
