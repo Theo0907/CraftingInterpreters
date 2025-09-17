@@ -583,7 +583,7 @@ void Parser::variable(bool canAssign)
 void Parser::namedVariable(Token name, bool canAssign)
 {
 	uint8_t getOp, setOp;
-	uint8_t arg = resolveLocal(&compiler.locals, &name);
+	int arg = resolveLocal(&compiler.locals, &name);
 	if (arg != -1)
 	{
 		getOp = OP_GET_LOCAL;
