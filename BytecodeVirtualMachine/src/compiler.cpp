@@ -106,6 +106,8 @@ public:
 	void	printStatement();
 	void	expressionStatement();
 	void	ifStatement();
+	void	whileStatement();
+	void	forStatement();
 
 	void	beginScope();
 	void	endScope();
@@ -183,6 +185,7 @@ public:
 	void	emitConstant(Value value);
 	int		emitJump(uint8_t instruction);
 	void	patchJump(int offset);
+	void	emitLoop(int loopStart);
 
 	void	emitByte(uint8_t byte);
 	void	emitBytes(uint8_t byte1, uint8_t byte2);
@@ -319,8 +322,12 @@ void Parser::statement()
 {
 	if (match(TOKEN_PRINT))
 		printStatement();
+	else if (match(TOKEN_FOR))
+		forStatement();
 	else if (match(TOKEN_IF))
 		ifStatement();
+	else if (match(TOKEN_WHILE))
+		whileStatement();
 	else if (match(TOKEN_LEFT_BRACE))
 	{
 		beginScope();
@@ -367,6 +374,80 @@ void Parser::ifStatement()
 	if (match(TOKEN_ELSE))
 		statement();
 	compiler.patchJump(elseJump);
+}
+
+void Parser::whileStatement()
+{
+	// Get address of first instruction to jump to later
+	int loopStart = compiler.currentChunk()->code.size();
+	consume(TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
+	expression();
+	consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+
+	// while condition evaluation here
+	int exitJump = compiler.emitJump(OP_JUMP_IF_FALSE);
+	// Clean up the stack in either branch
+	compiler.emitByte(OP_POP);
+	statement();
+
+	// Jump back to the start to re-evaluate the while condition
+	compiler.emitLoop(loopStart);
+
+	compiler.patchJump(exitJump);
+	// Clean up the stack in either branch
+	compiler.emitByte(OP_POP);
+}
+
+void Parser::forStatement()
+{
+	// Begin scope for potential variable declaration in the for
+	beginScope();
+	consume(TOKEN_LEFT_PAREN, "Expect '(' after 'for'.");
+	if (match(TOKEN_SEMICOLON))
+	{
+		// No initializer, nothing to do here
+	}
+	else if (match(TOKEN_VAR))
+		varDeclaration();
+	else
+		expressionStatement();
+
+	// Get address of for condition to loop to
+	int loopStart = compiler.currentChunk()->code.size();
+	int exitJump = -1;
+	if (!match(TOKEN_SEMICOLON))
+	{
+		expression();
+		consume(TOKEN_SEMICOLON, "Expect ';' after loop condition.");
+
+		// Jump out of the loop if the condition is false.
+		exitJump = compiler.emitJump(OP_JUMP_IF_FALSE);
+		compiler.emitByte(OP_POP); // Clear the condition from the stack in every branch
+	}
+
+	if (!match(TOKEN_RIGHT_PAREN))
+	{
+		int bodyJump = compiler.emitJump(OP_JUMP);
+		int incrementStart = compiler.currentChunk()->code.size();
+		expression();
+		compiler.emitByte(OP_POP);
+		consume(TOKEN_RIGHT_PAREN, "Expect ')' after for clauses.");
+
+		compiler.emitLoop(loopStart);
+		loopStart = incrementStart;
+		compiler.patchJump(bodyJump);
+	}
+	statement();
+	compiler.emitLoop(loopStart);
+
+	// Patch in exit jump if it exists
+	if (exitJump != -1)
+	{
+		compiler.patchJump(exitJump);
+		compiler.emitByte(OP_POP);
+	}
+	// End the scope after the loop
+	endScope();
 }
 
 void Parser::block()
@@ -663,6 +744,18 @@ void Compiler::patchJump(int offset)
 	// Cast jump as 2 uint8 values
 	currentChunk()->code[offset] = (jump >> 8) & 0xff;
 	currentChunk()->code[offset + 1] = jump & 0xff;
+}
+
+void Compiler::emitLoop(int loopStart)
+{
+	emitByte(OP_LOOP);
+
+	int offset = currentChunk()->code.size() - loopStart + 2;
+	if (offset > UINT16_MAX)
+		error(parser, "Loop body too large");
+
+	emitByte((offset >> 8) & 0xff);
+	emitByte(offset & 0xff);
 }
 
 bool Parser::match(TokenType type)
