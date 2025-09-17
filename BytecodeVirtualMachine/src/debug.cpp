@@ -38,6 +38,14 @@ static int byteInstruction(const std::string& name, Chunk* chunk, int offset)
 	return offset + 2;
 }
 
+static int jumpInstruction(const std::string& name, int sign, Chunk* chunk, int offset)
+{
+	uint16_t jump = (uint16_t)(chunk->code[offset + 1] << 8);
+	jump |= chunk->code[offset + 2];
+	std::cout << std::format("{:<16s} {:04d} -> {:d}", name, offset, offset + 3 + sign * jump) << std::endl;
+	return offset + 3;
+}
+
 int disassembleInstruction(Chunk* chunk, int offset)
 {
 	std::cout << std::format("{:04} ", offset);
@@ -89,6 +97,10 @@ int disassembleInstruction(Chunk* chunk, int offset)
 		return simpleInstruction("OP_NEGATE", offset);
 	case OP_PRINT:
 		return simpleInstruction("OP_PRINT", offset);
+	case OP_JUMP:
+		return jumpInstruction("OP_JUMP", 1, chunk, offset);
+	case OP_JUMP_IF_FALSE:
+		return jumpInstruction("OP_JUMP_IF_FAlSE", 1, chunk, offset);
 	case OP_RETURN:
 		return simpleInstruction("OP_RETURN", offset);
 	default:

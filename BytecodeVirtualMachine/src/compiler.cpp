@@ -105,6 +105,7 @@ public:
 	void	statement();
 	void	printStatement();
 	void	expressionStatement();
+	void	ifStatement();
 
 	void	beginScope();
 	void	endScope();
@@ -118,6 +119,9 @@ public:
 	void	unary(bool canAssign);
 	void	binary(bool canAssign);
 	void	literal(bool canAssign);
+	void	and_(bool canAssign);
+	void	or_(bool canAssign);
+
 	void	parsePrecedence(Precedence precedence);
 	uint8_t	parseVariable(const char* errorMessage);
 	uint8_t	identifierConstant(Token* name);
@@ -177,6 +181,8 @@ public:
 	void	endCompiler();
 	void	emitReturn();
 	void	emitConstant(Value value);
+	int		emitJump(uint8_t instruction);
+	void	patchJump(int offset);
 
 	void	emitByte(uint8_t byte);
 	void	emitBytes(uint8_t byte1, uint8_t byte2);
@@ -313,6 +319,8 @@ void Parser::statement()
 {
 	if (match(TOKEN_PRINT))
 		printStatement();
+	else if (match(TOKEN_IF))
+		ifStatement();
 	else if (match(TOKEN_LEFT_BRACE))
 	{
 		beginScope();
@@ -335,6 +343,30 @@ void Parser::expressionStatement()
 	expression();
 	consume(TOKEN_SEMICOLON, "Expect ';' after expression");
 	compiler.emitByte(OP_POP);
+}
+
+void Parser::ifStatement()
+{
+	consume(TOKEN_LEFT_PAREN, "Expect '(' after 'if'.");
+	expression();
+	consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+
+	// Keep address of the jump operand to patch later with jump destination
+	int thenJump = compiler.emitJump(OP_JUMP_IF_FALSE);
+	// Clean up the if condition before the statement to keep stack clean in the statement
+	compiler.emitByte(OP_POP);
+	statement();
+
+	// Prepare a jump to after a potential else jump
+	int elseJump = compiler.emitJump(OP_JUMP);
+
+	compiler.patchJump(thenJump);
+	// Clean up the if condition in the else branch too
+	compiler.emitByte(OP_POP);
+
+	if (match(TOKEN_ELSE))
+		statement();
+	compiler.patchJump(elseJump);
 }
 
 void Parser::block()
@@ -431,6 +463,35 @@ void Parser::literal(bool canAssign)
 	case TOKEN_TRUE: compiler.emitByte(OP_TRUE); break;
 	default: return; // Unreachable.
 	}
+}
+
+void Parser::and_(bool canAssign)
+{
+	// If value is false, jump to end directly. Else, try other operand.
+	int endJump = compiler.emitJump(OP_JUMP_IF_FALSE);
+
+	// Pop previous value, as only the last evaluated value is important
+	compiler.emitByte(OP_POP);
+	parsePrecedence(PREC_AND);
+
+	compiler.patchJump(endJump);
+}
+
+void Parser::or_(bool canAssign)
+{
+	//TODO: Implement more instructions to make OR faster, or at least as fast as AND
+
+	// If value is false, keep evaluating until a true value is found.
+	int elseJump = compiler.emitJump(OP_JUMP_IF_FALSE);
+	// If value was true, jump to the end directly
+	int endJump = compiler.emitJump(OP_JUMP);
+
+	compiler.patchJump(elseJump);
+	// Pop previous value as only last evaluated value is important
+	compiler.emitByte(OP_POP);
+
+	parsePrecedence(PREC_OR);
+	compiler.patchJump(endJump);
 }
 
 void Parser::variable(bool canAssign)
@@ -577,6 +638,33 @@ void Parser::declareVariable()
 	addLocal(name);
 }
 
+int Compiler::emitJump(uint8_t instruction)
+{
+	// Emit jump
+	emitByte(instruction);
+	// Emit placeholder jump destination
+	emitByte(0xff);
+	emitByte(0xff);
+
+	// Return jump placeholder offset to change later using patchJump
+	return currentChunk()->code.size() - 2;
+}
+
+void Compiler::patchJump(int offset)
+{
+	// -2 to adjust for the bytecode for the jump offset itself.
+	int jump = currentChunk()->code.size() - offset - 2;
+
+	// Check that jump is not too big, as we only have a int16 as operand
+	if (jump > UINT16_MAX) {
+		error(parser, "Too much code to jump over.");
+	}
+
+	// Cast jump as 2 uint8 values
+	currentChunk()->code[offset] = (jump >> 8) & 0xff;
+	currentChunk()->code[offset + 1] = jump & 0xff;
+}
+
 bool Parser::match(TokenType type)
 {
 	if (!check(type))
@@ -615,7 +703,7 @@ void Parser::InitRules()
  {&Parser::variable,     NULL,   PREC_NONE},// [TOKEN_IDENTIFIER]
  {&Parser::string,     NULL,   PREC_NONE},// [TOKEN_STRING]
  {&Parser::number,   NULL,   PREC_NONE},// [TOKEN_NUMBER]
- {NULL,     NULL,   PREC_NONE},// [TOKEN_AND]
+ {NULL,     &Parser::and_,   PREC_AND},// [TOKEN_AND]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_CLASS]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_ELSE]
  {&Parser::literal,     NULL,   PREC_NONE},// [TOKEN_FALSE]
@@ -623,7 +711,7 @@ void Parser::InitRules()
  {NULL,     NULL,   PREC_NONE},// [TOKEN_FUN]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_IF]
  {&Parser::literal,     NULL,   PREC_NONE},// [TOKEN_NIL]
- {NULL,     NULL,   PREC_NONE},// [TOKEN_OR]
+ {NULL,     &Parser::or_,   PREC_OR},// [TOKEN_OR]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_PRINT]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_RETURN]
  {NULL,     NULL,   PREC_NONE},// [TOKEN_SUPER]
