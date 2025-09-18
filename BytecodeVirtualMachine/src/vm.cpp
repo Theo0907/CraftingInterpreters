@@ -161,7 +161,7 @@ InterpretResult VM::run()
 			}
 			else
 			{
-				runtimeError("Operands must be two numbers or two string.");
+				runtimeError("Operands must be two numbers or two strings.");
 				return INTERPRET_RUNTIME_ERROR;
 			}
 		}

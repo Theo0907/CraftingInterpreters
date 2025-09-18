@@ -82,7 +82,7 @@ Token Scanner::string()
 	}
 
 	if (isAtEnd())
-		return errorToken("Unterminated string");
+		return errorToken("Unterminated string.");
 
 	advance();
 	return makeToken(TOKEN_STRING);

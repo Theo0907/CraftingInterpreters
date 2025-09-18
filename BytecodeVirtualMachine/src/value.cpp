@@ -66,7 +66,7 @@ void printValue(Value value)
 	case VAL_NIL:
 		std::cout << "nil"; break;
 	case VAL_NUMBER:
-		std::cout << std::format("'{:g}'", (double)value); break;
+		std::cout << std::format("{:g}", (double)value); break;
 	case VAL_OBJ:
 		printObject(value); break;
 	}

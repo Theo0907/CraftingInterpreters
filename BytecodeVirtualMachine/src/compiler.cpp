@@ -268,7 +268,7 @@ void Parser::synchronize()
 	
 	while (current.type != TOKEN_EOF)
 	{
-		if (current.type == TOKEN_SEMICOLON)
+		if (previous.type == TOKEN_SEMICOLON)
 			return;
 		switch (current.type)
 		{
@@ -341,14 +341,14 @@ void Parser::statement()
 void Parser::printStatement()
 {
 	expression();
-	consume(TOKEN_SEMICOLON, "Expect ';' after value");
+	consume(TOKEN_SEMICOLON, "Expect ';' after value.");
 	compiler.emitByte(OP_PRINT);
 }
 
 void Parser::expressionStatement()
 {
 	expression();
-	consume(TOKEN_SEMICOLON, "Expect ';' after expression");
+	consume(TOKEN_SEMICOLON, "Expect ';' after expression.");
 	compiler.emitByte(OP_POP);
 }
 
@@ -706,7 +706,7 @@ void Parser::declareVariable()
 		return;
 
 	const Token& name = previous;
-	for (int i = compiler.locals.localCount; i >= 0; --i)
+	for (int i = compiler.locals.localCount - 1; i >= 0; --i)
 	{
 		const Local& local = compiler.locals.locals[i];
 		// Exit loop if depth we are beyond current depth
@@ -714,7 +714,7 @@ void Parser::declareVariable()
 			break;
 
 		if (identifierEquals(name, local.name))
-			error(*this, "Already a variable with this name in this scope");
+			error(*this, "Already a variable with this name in this scope.");
 	}
 	addLocal(name);
 }
@@ -752,7 +752,7 @@ void Compiler::emitLoop(int loopStart)
 
 	int offset = currentChunk()->code.size() - loopStart + 2;
 	if (offset > UINT16_MAX)
-		error(parser, "Loop body too large");
+		error(parser, "Loop body too large.");
 
 	emitByte((offset >> 8) & 0xff);
 	emitByte(offset & 0xff);

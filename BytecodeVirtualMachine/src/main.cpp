@@ -10,6 +10,11 @@
 #include <fstream>
 #include <sstream>
 
+
+#ifdef _MSC_VER 
+#include "Windows.h"
+#endif
+
 void repl()
 {
 	char line[1024];
@@ -45,6 +50,9 @@ void	runFile(std::string path)
 
 	VM vm;
 	InterpretResult result = vm.interpret(content);
+
+	if (result == INTERPRET_COMPILE_ERROR) exit(65);
+	if (result == INTERPRET_RUNTIME_ERROR) exit(70);
 }
 
 
@@ -52,8 +60,21 @@ void	runFile(std::string path)
 //TODO: Add unit testing (https://github.com/munificent/craftinginterpreters/tree/master/test)	
 int main(int argc, const char* argv[])
 {
+#ifdef _MSC_VER 
+	// Set windows console to utf-8 mode to allow printing of utf-8 values
+	// This does not fully works because the buffer can still be filled and that will result in a broken character if a utf-8 character was being printed.
+	// but is a simple workaround for what is essentially a visual studio and windows bug that "works as designed"
+
+	// Set console code page to UTF-8 so console known how to interpret string data
+	SetConsoleOutputCP(CP_UTF8);
+
+	// Enable buffering to prevent VS from chopping up UTF-8 byte sequences
+	setvbuf(stdout, nullptr, _IOFBF, 1000);
+	setvbuf(stderr, nullptr, _IOFBF, 1000);
+#endif
 	if (argc == 1)
 		repl();
+		//runFile("../UnitTesting/test/string/literals.lox");
 	else if (argc == 2)
 		runFile(argv[1]);
 	else

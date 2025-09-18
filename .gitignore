@@ -435,3 +435,8 @@ FodyWeavers.xsd
 # Additional files built by Visual Studio
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudio,c++
+*.vscode
+Tools/UnitTest/.dart_tool
+Tools/UnitTest/build
+Tools/UnitTest/pubspec.lock
+Tools/UnitTest/.packages
