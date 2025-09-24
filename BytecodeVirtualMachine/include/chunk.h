@@ -1,7 +1,6 @@
 #pragma once
 
 #include "common.h"
-#include "value.h"
 
 #include <vector>
 
@@ -30,16 +29,17 @@ enum OpCode : uint8_t
 	OP_JUMP,
 	OP_JUMP_IF_FALSE,
 	OP_LOOP,
+	OP_CALL,
 	OP_RETURN,
 };
 
 struct Chunk
 {
-	std::vector<uint8_t>	code;
-	std::vector<Value>		constants;
-	std::vector<int>		lineInfo;
+	std::vector<uint8_t>			code;
+	std::vector<struct Value>		constants;
+	std::vector<int>				lineInfo;
 
 	Chunk();
 	void	write(uint8_t byte, int line);
-	int		addConstant(Value v);
+	int		addConstant(struct Value v);
 };

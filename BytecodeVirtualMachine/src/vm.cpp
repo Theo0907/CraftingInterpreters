@@ -4,12 +4,19 @@
 #include "value.h"
 #include "debug.h"
 #include "compiler.h"
+#include "obj.h"
 
 #include <format>
 #include <iostream>
 
-VM::VM() : stack()
+static Value clockNative(int argCount, Value* args) {
+	return { (double)clock() / CLOCKS_PER_SEC };
+}
+
+VM::VM() : frames(), stack()
 {
+	resetStack();
+	defineNative("clock", clockNative);
 }
 
 VM::~VM()
@@ -19,13 +26,15 @@ VM::~VM()
 
 InterpretResult VM::interpret(const std::string& source)
 {
-	chunk = Chunk();
-	if (!compile(this, source, &chunk))
+	ObjFunction* func = compile(this, source);
+	if (func == nullptr)
 		return INTERPRET_COMPILE_ERROR;
 
-	ip = chunk.code.data();
-
 	resetStack();
+
+	push(Value(func));
+	call(func, 0);
+
 	return run();
 }
 
@@ -55,10 +64,11 @@ Value VM::concatenate(Value a, Value b)
 
 InterpretResult VM::run()
 {
-#define READ_BYTE() (*ip++)
-#define READ_CONSTANT() (chunk.constants[READ_BYTE()])
+	CallFrame* frame = &frames[frameCount - 1];
+#define READ_BYTE() (*frame->ip++)
+#define READ_CONSTANT() (frame->function->chunk.constants[READ_BYTE()])
 #define READ_SHORT() \
-	(ip += 2, (uint16_t)((ip[-2] << 8) | ip[-1]))
+	(frame->ip += 2, (uint16_t)((frame->ip[-2] << 8) | frame->ip[-1]))
 #define BINARY_OP(op)\
 	do {\
 		if (!peek(0).isNumber() || !peek(1).isNumber())\
@@ -83,7 +93,7 @@ InterpretResult VM::run()
 			std::cout << " ]";
 		}
 		std::cout << std::endl;
-		disassembleInstruction(&chunk, (int)(ip - chunk.code.data()));
+		disassembleInstruction(&frame->function->chunk, (int)(frame->ip - frame->function->chunk.code.data()));
 #endif
 		uint8_t instruction;
 		switch (instruction = READ_BYTE())
@@ -98,7 +108,7 @@ InterpretResult VM::run()
 		case OP_GET_LOCAL:
 		{
 			uint8_t slot = READ_BYTE();
-			push(stack[slot]);
+			push(frame->slots[slot]);
 			break;
 		}
 		case OP_GET_GLOBAL:
@@ -123,7 +133,7 @@ InterpretResult VM::run()
 		case OP_SET_LOCAL:
 		{
 			uint8_t slot = READ_BYTE();
-			stack[slot] = peek(0);
+			frame->slots[slot] = peek(0);
 			break;
 		}
 		case OP_SET_GLOBAL:
@@ -185,25 +195,44 @@ InterpretResult VM::run()
 		case OP_JUMP:
 		{
 			uint16_t offset = READ_SHORT();
-			ip += offset;
+			frame->ip += offset;
 			break;
 		}
 		case OP_JUMP_IF_FALSE:
 		{
 			uint16_t offset = READ_SHORT();
 			if (isFalsey(peek(0)))
-				ip += offset;
+				frame->ip += offset;
 			break;
 		}
 		case OP_LOOP:
 		{
 			uint16_t offset = READ_SHORT();
-			ip -= offset;
+			frame->ip -= offset;
+			break;
+		}
+		case OP_CALL:
+		{
+			int argCount = READ_BYTE();
+			if (!callValue(peek(argCount), argCount))
+				return INTERPRET_RUNTIME_ERROR;
+			// Update cached pointer to new environment
+			frame = &frames[frameCount - 1];
 			break;
 		}
 		case OP_RETURN:
-			// Exit interpreter
-			return INTERPRET_OK;
+		{
+			Value result = pop();
+			--frameCount;
+			if (frameCount == 0)
+			{
+				pop();
+				return INTERPRET_OK;
+			}
+			stackTop = frame->slots;
+			push(result);
+			frame = &frames[frameCount - 1];
+		}
 		}
 	}
 #undef READ_BYTE
@@ -239,13 +268,38 @@ void VM::freeObject(Obj* object)
 {
 	switch (object->type)
 	{
+	case OBJ_FUNCTION:
+	{
+		ObjFunction* func = (ObjFunction*)object;
+		delete func;
+		// No need to delete name string as it should be garbage collected
+		break;
+	}
+	case OBJ_NATIVE:
+	{
+		ObjNative* native = (ObjNative*)object;
+		delete native;
+		break;
+	}
 	case OBJ_STRING:
 	{
 		ObjString* string = (ObjString*)object;
 		free(string->chars);
 		delete string;
+		break;
 	}
 	}
+}
+
+// TODO: Add more native functions to the VM.
+void VM::defineNative(std::string_view name, NativeFn function)
+{
+	// Pushing and popping values to stack to keep them from beeing garbage collected
+	push({ copyString(static_cast<int>(name.length()), name.data(), this) });
+	push({ newNative(function, this) });
+	globals.set(stack[0].getStringObj(), stack[1]);
+	pop();
+	pop();
 }
 
 void VM::push(Value value)
@@ -264,13 +318,70 @@ Value VM::peek(int dist)
 	return stackTop[-1-dist];
 }
 
+bool VM::callValue(Value callee, int argCount)
+{
+	if (callee.isObj())
+	{
+		switch (callee.getObjType())
+		{
+		case OBJ_FUNCTION:
+			return call(callee.getFunctionObj(), argCount);
+		case OBJ_NATIVE:
+		{
+			// TODO: Add arity check to native function calls
+			// TODO: Add support for runtime error in a native function
+			NativeFn native = callee.getNativeFn();
+			Value result = native(argCount, stackTop - argCount);
+			stackTop -= argCount + 1;
+			push(result);
+			return true;
+		}
+		default:
+			break;
+		}
+	}
+	runtimeError("Can only call functions and classes.");
+	return false;
+}
+
+bool VM::call(ObjFunction* function, int argCount)
+{
+	if (argCount != function->arity)
+	{
+		runtimeError(std::format("Expected {} arguments but got {}.", function->arity, argCount));
+		return false;
+	}
+
+	if (frameCount == FRAMES_MAX)
+	{	
+		runtimeError("Stack overflow.");
+		return false;
+	}
+
+	CallFrame* frame = &frames[frameCount++];
+	frame->function = function;
+	frame->ip = function->chunk.code.data();
+	frame->slots = stackTop - argCount - 1;
+	return true;
+}
+
 // TODO: Maybe re-add variadic param to use std::format dynamically instead of relying on doing it in the message
 void VM::runtimeError(const std::string& message)
 {
 	std::cerr << message << std::endl;
 
-	size_t instruction = ip - chunk.code.data() - 1;
-	int line = chunk.lineInfo[instruction];
-	std::cerr << std::format("[line {}] in script\n", line);
+	// Print stack frame
+	for (int i = frameCount - 1; i >= 0; --i)
+	{
+		CallFrame* frame = &frames[i];
+		ObjFunction* func = frame->function;
+		size_t instruction = frame->ip - func->chunk.code.data() - 1; // Show last executed instruction
+		std::cerr << std::format("[line {}] in ", func->chunk.lineInfo[instruction]);
+		if (func->name == nullptr)
+			std::cerr << "script" << std::endl;
+		else
+			std::cerr << std::format("{}()", func->name->chars) << std::endl;
+	}
+
 	resetStack();
 }

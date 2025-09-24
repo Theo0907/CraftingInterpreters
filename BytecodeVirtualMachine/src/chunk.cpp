@@ -1,4 +1,5 @@
 #include "chunk.h"
+#include "value.h"
 
 Chunk::Chunk()
 {

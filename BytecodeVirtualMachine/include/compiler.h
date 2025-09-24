@@ -5,4 +5,4 @@
 
 #include <string>
 
-bool compile(VM* vm, const std::string& source, Chunk* chunk);
+struct ObjFunction* compile(struct VM* vm, const std::string& source);

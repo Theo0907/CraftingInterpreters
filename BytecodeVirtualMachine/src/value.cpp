@@ -35,11 +35,7 @@ void Value::initStringFromPointer(VM* vm, int len, char* chars, uint32_t* option
 		hash = ObjString::hashString(chars, len);
 	else
 		hash = *optionalHash;
-	ObjString* string = new ObjString(len, hash, chars);
-	as.obj = string;
-	as.obj->next = vm->objects;
-	vm->objects = as.obj;
-	vm->strings.set(string, {});
+	as.obj = newString(len, hash, chars, vm);
 }
 
 void Value::initStringFromString(VM* vm, int len, const char* inChars, uint32_t* optionalHash)
@@ -72,13 +68,36 @@ void printValue(Value value)
 	}
 }
 
+static void printFunction(ObjFunction* function)
+{
+	if (function->name == nullptr)
+	{
+		std::cout << "<script>";
+		return;
+	}
+
+	std::cout << "<fn " << function->name->chars << ">";
+}
+
 void printObject(Obj* object)
 {
 	switch (object->type)
 	{
+	case OBJ_FUNCTION:
+	{
+		printFunction(static_cast<ObjFunction*>(object));
+		break;
+	}
+	case OBJ_NATIVE:
+	{
+		std::cout << "<native fn>";
+		break;
+	}
 	case OBJ_STRING:
+	{
 		ObjString* str = static_cast<ObjString*>(object);
 		std::cout << str->chars;
 		break;
+	}
 	}
 }

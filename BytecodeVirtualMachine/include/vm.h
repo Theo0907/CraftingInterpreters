@@ -4,8 +4,10 @@
 #include "value.h"
 #include "chunk.h"
 #include "table.h"
+#include "obj.h"
 
 #include <string>
+#include <array>
 
 enum InterpretResult
 {
@@ -15,12 +17,21 @@ enum InterpretResult
 };
 
 // This could be a constexpr instead
-#define STACK_MAX 256
+#define FRAMES_MAX 64
+#define STACK_MAX (FRAMES_MAX * UINT8_COUNT)
+
+struct CallFrame
+{
+	ObjFunction* function;
+	uint8_t* ip;
+	Value* slots;
+};
 
 struct VM
 {
-	Chunk chunk ;
-	uint8_t* ip = nullptr;
+	std::array<CallFrame, FRAMES_MAX>	frames;
+	int									frameCount = 0;
+
 	Value				stack[STACK_MAX];
 	Value*				stackTop = nullptr;
 	Obj*				objects = nullptr;
@@ -38,10 +49,13 @@ private:
 	void			freeVM();
 	void			freeObjects();
 	void			freeObject(Obj* object);
+	void			defineNative(std::string_view name, NativeFn function);
 
 	void			push(Value value);
 	Value			pop();
 	Value			peek(int dist);
+	bool			callValue(Value callee, int argCount);
+	bool			call(ObjFunction* function, int argCount);
 
 	void			runtimeError(const std::string& message);
 

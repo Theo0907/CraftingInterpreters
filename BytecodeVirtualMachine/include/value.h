@@ -56,7 +56,12 @@ struct Value
 	// Object functions
 	ObjType	getObjType() { return as.obj->type; }
 	bool	isString() { return isObj() && getObjType() == OBJ_STRING; }
+	bool	isFunction() { return isObj() && getObjType() == OBJ_FUNCTION; }
+	bool	isNative() { return isObj() && getObjType() == OBJ_NATIVE; }
 	ObjString* getStringObj() { return static_cast<ObjString*>(as.obj); }
+	ObjFunction* getFunctionObj() { return static_cast<ObjFunction*>(as.obj); }
+	ObjNative* getNativeObj() { return static_cast<ObjNative*>(as.obj); }
+	NativeFn getNativeFn() { return getNativeObj()->function; }
 	int		getStringLen() { return static_cast<ObjString*>(as.obj)->length; }
 	char*	getStringChars() { return static_cast<ObjString*>(as.obj)->chars; }
 	void	initStringFromPointer(struct VM* vm, int len, char* chars, uint32_t* optionalHash = nullptr);

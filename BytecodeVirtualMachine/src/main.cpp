@@ -73,8 +73,8 @@ int main(int argc, const char* argv[])
 	setvbuf(stderr, nullptr, _IOFBF, 1000);
 #endif
 	if (argc == 1)
-		repl();
-		//runFile("../UnitTesting/test/string/literals.lox");
+		//repl();
+		runFile("../UnitTesting/test/function/body_must_be_block.lox");
 	else if (argc == 2)
 		runFile(argv[1]);
 	else
